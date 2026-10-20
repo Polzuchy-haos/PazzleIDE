@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data:; worker-src 'self' blob:; connect-src 'self'">
+  <title>VisualIDE</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand" title="VisualIDE для PVM">
+      <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+        <rect x="2" y="4" width="16" height="10" rx="3" fill="#FFAB19"/>
+        <rect x="8" y="16" width="16" height="10" rx="3" fill="#4C97FF"/>
+        <path d="M21 9l4 4-4 4M27 15h-6" stroke="#59C059" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>VisualIDE <small>PVM</small></span>
+    </div>
+
+    <div class="group">
+      <button data-cmd="new" class="icon-only" title="Новый проект (Ctrl+N)">
+        <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z M14 3v4h4"/></svg>
+      </button>
+      <button data-cmd="open" class="icon-only" title="Открыть проект (Ctrl+O)">
+        <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>
+      </button>
+      <button data-cmd="save" class="icon-only" title="Сохранить (Ctrl+S)">
+        <svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z M8 4v5h7V4 M8 20v-6h8v6"/></svg>
+      </button>
+    </div>
+
+    <div class="group">
+      <button data-cmd="build" id="btn-build" title="Собрать: pvmcc + pvmc (Ctrl+B)">
+        <svg viewBox="0 0 24 24"><path d="M14 4l6 6-9 9H5v-6z M12 6l6 6"/></svg><span>Собрать</span>
+      </button>
+      <button data-cmd="run" class="primary" id="btn-run" title="Запустить без отладки (Ctrl+F5)">
+        <svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" class="fill"/></svg><span>Запустить</span>
+      </button>
+      <button data-cmd="debug" class="debug" id="btn-debug" title="Начать отладку / продолжить (F5)">
+        <svg viewBox="0 0 24 24"><path d="M9 7a3 3 0 0 1 6 0 M7 10h10v5a5 5 0 0 1-10 0z M12 10v10 M4 13h3 M17 13h3 M5 19l2.5-2 M19 19l-2.5-2 M5 8l2.5 2 M19 8l-2.5 2"/></svg><span>Отладка</span>
+      </button>
+    </div>
+
+    <div class="group debug-controls" id="debug-controls" hidden>
+      <button data-cmd="continue" class="icon-only" id="dbg-continue" title="Продолжить (F5)">
+        <svg viewBox="0 0 24 24"><path d="M6 5v14 M10 5l10 7-10 7z" class="fill-path"/></svg>
+      </button>
+      <button data-cmd="pause" class="icon-only" id="dbg-pause" title="Пауза (F6)">
+        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" class="fill"/><rect x="14" y="5" width="4" height="14" rx="1" class="fill"/></svg>
+      </button>
+      <button data-cmd="stepOver" class="icon-only step" title="Шаг с обходом — следующий блок (F10)">
+        <svg viewBox="0 0 24 24"><path d="M4 13a8 8 0 0 1 15-3 M20 5v5h-5"/><circle cx="12" cy="18" r="2" class="fill"/></svg>
+      </button>
+      <button data-cmd="stepInto" class="icon-only step" title="Шаг с заходом в функцию (F11)">
+        <svg viewBox="0 0 24 24"><path d="M12 3v11 M7 9l5 5 5-5"/><circle cx="12" cy="19" r="2" class="fill"/></svg>
+      </button>
+      <button data-cmd="stepOut" class="icon-only step" title="Шаг с выходом из функции (Shift+F11)">
+        <svg viewBox="0 0 24 24"><path d="M12 15V4 M7 9l5-5 5 5"/><circle cx="12" cy="19" r="2" class="fill"/></svg>
+      </button>
+      <button data-cmd="stepInstr" class="icon-only step" title="Одна инструкция ВМ (Ctrl+F11)">
+        <svg viewBox="0 0 24 24"><path d="M5 12h10 M11 8l4 4-4 4 M19 6v12"/></svg>
+      </button>
+      <button data-cmd="reset" class="icon-only step" title="Сначала (Ctrl+Shift+F5)">
+        <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2 M4 4v5h5"/></svg>
+      </button>
+      <button data-cmd="stop" class="icon-only danger" title="Остановить (Shift+F5)">
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5" class="fill"/></svg>
+      </button>
+    </div>
+    <div class="group" id="run-controls" hidden>
+      <button data-cmd="stop" class="danger" title="Остановить (Shift+F5)">
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5" class="fill"/></svg><span>Стоп</span>
+      </button>
+    </div>
+
+    <div class="group target">
+      <label title="Где выполняется программа">
+        <span>Цель</span>
+        <select id="target">
+          <option value="sim">Симулятор (ВМ на компьютере)</option>
+          <option value="board-host">Плата: программа с хоста</option>
+          <option value="board-flash">Плата: прошитая программа</option>
+        </select>
+      </label>
+      <label id="port-box" title="Последовательный порт платы">
+        <select id="port"></select>
+        <select id="baud" title="Скорость порта">
+          <option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option>
+        </select>
+      </label>
+      <button class="icon-only" id="btn-ports" title="Обновить список портов">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5"/></svg>
+      </button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="group">
+      <button data-cmd="toggleTheme" class="icon-only" title="Светлая / тёмная тема">
+        <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
+      </button>
+      <button data-cmd="settings" class="icon-only" title="Настройки (Ctrl+,)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout" id="layout">
+    <section class="pane blocks-pane">
+      <div id="blockly"></div>
+    </section>
+
+    <div class="splitter vertical" data-target="right" title="Потяните, чтобы изменить размер"></div>
+
+    <section class="pane right-pane" id="right">
+      <div class="pane-header">
+        <div class="tabs" id="code-tabs">
+          <button class="tab active" data-view="hlc" title="Код на PVM HLC, созданный из блоков">HLC</button>
+          <button class="tab" data-view="pvms" title="Ассемблер PVM (pvmcc) — после сборки">Ассемблер</button>
+          <button class="tab" data-view="lst" title="Листинг с адресами и картой памяти (pvmc -l) — после сборки">Листинг</button>
+        </div>
+        <span class="badge warn" id="code-warnings" hidden></span>
+        <span class="spacer"></span>
+        <button class="small" id="btn-edit" title="Разрешить ручное редактирование HLC (блоки перестанут обновлять код)">
+          <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span>Править</span>
+        </button>
+        <button class="small" id="btn-copy" title="Скопировать код">
+          <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg>
+        </button>
+      </div>
+      <div id="code-banner" class="banner" hidden>
+        Ручной режим: код HLC не обновляется из блоков.
+        <button class="link" id="btn-regenerate">Вернуть код из блоков</button>
+      </div>
+      <div id="code"></div>
+
+      <div class="splitter horizontal" data-target="console" title="Потяните, чтобы изменить размер"></div>
+
+      <div class="console" id="console">
+        <div class="pane-header">
+          <div class="tabs" id="bottom-tabs">
+            <button class="tab active" data-panel="console-panel">Консоль</button>
+            <button class="tab" data-panel="debug-panel">Отладка <span class="dot" id="debug-dot" hidden></span></button>
+          </div>
+          <span class="run-state" id="run-state"></span>
+          <span class="spacer"></span>
+          <button class="small" data-cmd="clearConsole" title="Очистить консоль">
+            <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></svg>
+          </button>
+        </div>
+        <div class="panel" id="console-panel">
+          <pre id="console-output" tabindex="0"></pre>
+        </div>
+        <div class="panel" id="debug-panel" hidden>
+          <div class="debug-empty" id="debug-empty">
+            Отладка не запущена. Нажмите <b>Отладка</b> (F5). Точки останова ставятся на блоки
+            (правый щелчок → «Точка останова» или F9) и щелчком слева от строки кода HLC.
+          </div>
+          <div class="debug-view" id="debug-view" hidden>
+            <div class="debug-where" id="debug-where"></div>
+            <div class="debug-columns">
+              <section>
+                <h4>Переменные</h4>
+                <table id="debug-vars"></table>
+              </section>
+              <section>
+                <h4>Стек ВМ <small>(вершина сверху)</small></h4>
+                <table id="debug-stack"></table>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <span id="status-text">Готово</span>
+    <span class="spacer"></span>
+    <span id="status-memory" title="Память программы по листингу последней сборки"></span>
+    <span id="status-blocks"></span>
+    <span id="status-tools" title="Папка утилит PVM"></span>
+  </footer>
+
+  <dialog id="settings-dialog">
+    <form method="dialog" id="settings-form">
+      <h2>Настройки</h2>
+      <div class="field-row">
+        <label>Тема
+          <select name="theme">
+            <option value="dark">Тёмная</option>
+            <option value="light">Светлая</option>
+          </select>
+        </label>
+        <label>Вид блоков
+          <select name="renderer">
+            <option value="zelos">Как в Scratch (zelos)</option>
+            <option value="geras">Классический (geras)</option>
+            <option value="thrasos">Компактный (thrasos)</option>
+          </select>
+        </label>
+        <label>Размер шрифта кода
+          <input name="fontSize" type="number" min="10" max="28">
+        </label>
+      </div>
+      <h3>Утилиты PVM</h3>
+      <p class="hint">Папка, где лежат <code>pvmcc</code>, <code>pvmc</code>, <code>pvmsim</code>, <code>pvmdbg</code>
+        (обычно <code>Release</code> проекта PVM). Пусто — искать автоматически: переменная <code>PVM_HOME</code>,
+        папка <code>../pvm/Release</code> рядом с VisualIDE, <code>PATH</code>.</p>
+      <div class="field-line">
+        <input name="pvmTools" placeholder="автоматически" spellcheck="false">
+        <button type="button" id="settings-browse">Обзор…</button>
+      </div>
+      <p class="hint" id="settings-tools-status"></p>
+      <h3>Плата</h3>
+      <div class="field-row">
+        <label>Порт по умолчанию
+          <input name="port" placeholder="COM3" spellcheck="false">
+        </label>
+        <label>Скорость
+          <select name="baud">
+            <option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option>
+          </select>
+        </label>
+        <label class="checkbox" title="Показывать трассировку каждой инструкции симулятора pvmsim">
+          <input name="rawOutput" type="checkbox"> Полный вывод симулятора
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button value="cancel">Отмена</button>
+        <button value="ok" class="primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="about-dialog">
+    <form method="dialog">
+      <h2>VisualIDE для PVM</h2>
+      <p id="about-text"></p>
+      <p class="hint">Блоки — Blockly (Apache 2.0), редактор кода — Monaco (MIT), оболочка — Electron (MIT).
+        Компилятор, симулятор и отладчик — утилиты проекта PVM.</p>
+      <div class="dialog-actions"><span class="spacer"></span><button class="primary">OK</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

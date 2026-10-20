@@ -1,0 +1,190 @@
+{
+  "format": "visualide-project",
+  "version": 1,
+  "language": "pvm",
+  "title": "Простые числа до 50",
+  "description": "Считает простые числа от 2 до 50: сколько их и какое последнее. Ответ: 15 и 47.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "variables_set",
+          "fields": {
+            "VAR": {
+              "id": "count"
+            }
+          },
+          "inputs": {
+            "VALUE": {
+              "block": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 0
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "variables_set",
+              "fields": {
+                "VAR": {
+                  "id": "last"
+                }
+              },
+              "inputs": {
+                "VALUE": {
+                  "block": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 0
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "controls_for",
+                  "fields": {
+                    "VAR": {
+                      "id": "i"
+                    }
+                  },
+                  "inputs": {
+                    "FROM": {
+                      "block": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 2
+                        }
+                      }
+                    },
+                    "TO": {
+                      "block": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 50
+                        }
+                      }
+                    },
+                    "BY": {
+                      "block": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 1
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "controls_if",
+                        "inputs": {
+                          "IF0": {
+                            "block": {
+                              "type": "math_number_property",
+                              "fields": {
+                                "PROPERTY": "PRIME"
+                              },
+                              "inputs": {
+                                "NUMBER_TO_CHECK": {
+                                  "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                      "VAR": {
+                                        "id": "i"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "DO0": {
+                            "block": {
+                              "type": "math_change",
+                              "fields": {
+                                "VAR": {
+                                  "id": "count"
+                                }
+                              },
+                              "inputs": {
+                                "DELTA": {
+                                  "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "variables_set",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "last"
+                                    }
+                                  },
+                                  "inputs": {
+                                    "VALUE": {
+                                      "block": {
+                                        "type": "variables_get",
+                                        "fields": {
+                                          "VAR": {
+                                            "id": "i"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "variables_get",
+                            "fields": {
+                              "VAR": {
+                                "id": "count"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 40
+        }
+      ]
+    },
+    "variables": [
+      {
+        "id": "i",
+        "name": "i"
+      },
+      {
+        "id": "count",
+        "name": "сколько"
+      },
+      {
+        "id": "last",
+        "name": "последнее"
+      }
+    ]
+  }
+}

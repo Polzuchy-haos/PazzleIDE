@@ -1,0 +1,150 @@
+{
+  "format": "visualide-project",
+  "version": 1,
+  "language": "pvm",
+  "title": "Бегущий огонь (биты)",
+  "description": "Сдвигает единичный бит по 8 разрядам порта LED: 1, 2, 4 … 128.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "variables_set",
+          "fields": {
+            "VAR": {
+              "id": "bit"
+            }
+          },
+          "inputs": {
+            "VALUE": {
+              "block": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 1
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "controls_repeat_ext",
+              "inputs": {
+                "TIMES": {
+                  "block": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 8
+                    }
+                  }
+                },
+                "DO": {
+                  "block": {
+                    "type": "pvm_port_set",
+                    "fields": {
+                      "NAME": "LED",
+                      "ADDR": "0x4000"
+                    },
+                    "inputs": {
+                      "VALUE": {
+                        "block": {
+                          "type": "variables_get",
+                          "fields": {
+                            "VAR": {
+                              "id": "bit"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "variables_set",
+                        "fields": {
+                          "VAR": {
+                            "id": "bit"
+                          }
+                        },
+                        "inputs": {
+                          "VALUE": {
+                            "block": {
+                              "type": "pvm_bit_op",
+                              "fields": {
+                                "OP": "SHL"
+                              },
+                              "inputs": {
+                                "A": {
+                                  "block": {
+                                    "type": "variables_get",
+                                    "fields": {
+                                      "VAR": {
+                                        "id": "bit"
+                                      }
+                                    }
+                                  }
+                                },
+                                "B": {
+                                  "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "pvm_delay",
+                            "inputs": {
+                              "TICKS": {
+                                "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                    "NUM": 50
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "pvm_port_set",
+                  "fields": {
+                    "NAME": "LED",
+                    "ADDR": "0x4000"
+                  },
+                  "inputs": {
+                    "VALUE": {
+                      "block": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 40
+        }
+      ]
+    },
+    "variables": [
+      {
+        "id": "bit",
+        "name": "бит"
+      }
+    ]
+  }
+}

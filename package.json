@@ -1,0 +1,104 @@
+{
+  "name": "visualide",
+  "version": "0.1.0",
+  "description": "VisualIDE для PVM: визуальное программирование стековой ВМ PVM блоками (как в Scratch), код PVM HLC, сборка, запуск и отладка в симуляторе и на плате",
+  "main": "src/main/main.cjs",
+  "scripts": {
+    "make-examples": "node scripts/make-examples.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/build.mjs && node scripts/start.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "cli": "node src/cli/vide.mjs",
+    "dist": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder",
+    "dist:win": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --win",
+    "dist:mac": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --mac",
+    "dist:linux": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --linux",
+    "make-icon": "node -e \"delete process.env.ELECTRON_RUN_AS_NODE; require('child_process').spawnSync(require('electron'), ['scripts/make-icon.cjs'], {stdio: 'inherit'})\"",
+    "pack": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --dir",
+    "pvm:bundle": "node scripts/bundle-pvm.mjs"
+  },
+  "author": "Daniil Kudinov",
+  "license": "UNLICENSED",
+  "type": "module",
+  "devDependencies": {
+    "blockly": "^13.4.0",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "monaco-editor": "^0.57.0"
+  },
+  "productName": "VisualIDE",
+  "private": true,
+  "bin": {
+    "vide": "src/cli/vide.mjs"
+  },
+  "build": {
+    "appId": "ru.visualide.app",
+    "productName": "VisualIDE",
+    "copyright": "© 2026 Daniil Kudinov",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "src/main/**/*",
+      "dist/renderer/**/*",
+      "languages/*.json",
+      "examples/*.vide",
+      "docs/*.md",
+      "build/icon.png"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "vide",
+        "name": "Проект VisualIDE",
+        "description": "Проект VisualIDE",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png",
+      "maintainer": "Daniil Kudinov"
+    },
+    "extraResources": [
+      {
+        "from": "vendor/pvm",
+        "to": "pvm",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

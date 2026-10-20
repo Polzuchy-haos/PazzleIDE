@@ -1,0 +1,197 @@
+{
+  "format": "visualide-project",
+  "version": 1,
+  "language": "pvm",
+  "title": "Функции: факториал",
+  "description": "Рекурсивная функция. Результат 7! = 5040 — в переменной «результат» (панель «Отладка»).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "procedures_defreturn",
+          "fields": {
+            "NAME": "факториал"
+          },
+          "extraState": {
+            "params": [
+              {
+                "name": "n",
+                "id": "n"
+              }
+            ]
+          },
+          "inputs": {
+            "STACK": {
+              "block": {
+                "type": "procedures_ifreturn",
+                "extraState": "<mutation value=\"1\"></mutation>",
+                "inputs": {
+                  "CONDITION": {
+                    "block": {
+                      "type": "logic_compare",
+                      "fields": {
+                        "OP": "LTE"
+                      },
+                      "inputs": {
+                        "A": {
+                          "block": {
+                            "type": "variables_get",
+                            "fields": {
+                              "VAR": {
+                                "id": "n"
+                              }
+                            }
+                          }
+                        },
+                        "B": {
+                          "block": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "VALUE": {
+                    "block": {
+                      "type": "math_number",
+                      "fields": {
+                        "NUM": 1
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "RETURN": {
+              "block": {
+                "type": "math_arithmetic",
+                "fields": {
+                  "OP": "MULTIPLY"
+                },
+                "inputs": {
+                  "A": {
+                    "block": {
+                      "type": "variables_get",
+                      "fields": {
+                        "VAR": {
+                          "id": "n"
+                        }
+                      }
+                    }
+                  },
+                  "B": {
+                    "block": {
+                      "type": "procedures_callreturn",
+                      "extraState": {
+                        "name": "факториал",
+                        "params": [
+                          "n"
+                        ]
+                      },
+                      "inputs": {
+                        "ARG0": {
+                          "block": {
+                            "type": "math_arithmetic",
+                            "fields": {
+                              "OP": "MINUS"
+                            },
+                            "inputs": {
+                              "A": {
+                                "block": {
+                                  "type": "variables_get",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "n"
+                                    }
+                                  }
+                                }
+                              },
+                              "B": {
+                                "block": {
+                                  "type": "math_number",
+                                  "fields": {
+                                    "NUM": 1
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 40
+        },
+        {
+          "type": "variables_set",
+          "fields": {
+            "VAR": {
+              "id": "result"
+            }
+          },
+          "inputs": {
+            "VALUE": {
+              "block": {
+                "type": "procedures_callreturn",
+                "extraState": {
+                  "name": "факториал",
+                  "params": [
+                    "n"
+                  ]
+                },
+                "inputs": {
+                  "ARG0": {
+                    "block": {
+                      "type": "math_number",
+                      "fields": {
+                        "NUM": 7
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "text_print",
+              "inputs": {
+                "TEXT": {
+                  "block": {
+                    "type": "variables_get",
+                    "fields": {
+                      "VAR": {
+                        "id": "result"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 340
+        }
+      ]
+    },
+    "variables": [
+      {
+        "id": "n",
+        "name": "n"
+      },
+      {
+        "id": "result",
+        "name": "результат"
+      }
+    ]
+  }
+}

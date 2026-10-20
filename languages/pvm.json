@@ -1,0 +1,803 @@
+{
+  "id": "pvm",
+  "name": "PVM HLC (Pico VM)",
+  "description": "Высокоуровневый язык стековой виртуальной машины PVM для микроконтроллеров. Сборкой (pvmcc, pvmc), запуском и отладкой (pvmsim, pvmdbg) управляет VisualIDE.",
+  "fileExtension": "hlc",
+  "fileName": "main.hlc",
+  "editorLanguage": "c",
+  "indent": "    ",
+  "lineComment": "//",
+  "reservedWords": [
+    "int",
+    "void",
+    "volatile",
+    "const",
+    "if",
+    "else",
+    "while",
+    "do",
+    "for",
+    "return",
+    "halt",
+    "svc",
+    "import",
+    "extern",
+    "from",
+    "sizeof",
+    "section",
+    "main",
+    "code",
+    "ram",
+    "stack",
+    "usrsect",
+    "Time_GetTick",
+    "Time_Elapsed",
+    "Time_Delay",
+    "VideMod",
+    "VidePow",
+    "VideAbs",
+    "VideSqrt",
+    "VideConstrain",
+    "VideRandom",
+    "VideSeed",
+    "VideIsPrime"
+  ],
+  "types": {
+    "Number": "int",
+    "Boolean": "int",
+    "String": "int",
+    "Integer": "int",
+    "List": "int",
+    "Void": "void"
+  },
+  "defaults": {
+    "Number": "0",
+    "Boolean": "0",
+    "String": "0",
+    "List": "0"
+  },
+  "nakedValue": "// значение без использования: {{CODE}}",
+  "variables": {
+    "declaration": "int {{NAME}};"
+  },
+  "functions": {
+    "param": "int {{NAME}}",
+    "paramSeparator": ", ",
+    "noReturn": [
+      "void {{NAME}}({{PARAMS}}) {",
+      "{{BODY}}}"
+    ],
+    "withReturn": [
+      "int {{NAME}}({{PARAMS}}) {",
+      "{{BODY}}    return {{RETURN}};",
+      "}"
+    ]
+  },
+  "program": [
+    "// Сгенерировано VisualIDE (PVM HLC)",
+    "{{WARNINGS}}",
+    "{{HELPERS}}",
+    "",
+    "{{VARIABLES}}",
+    "",
+    "{{FUNCTIONS}}",
+    "",
+    "void main() {",
+    "{{BODY|indent}}}"
+  ],
+  "helpers": {
+    "time": "import time;",
+    "mod": [
+      "int VideMod(int a, int b) {",
+      "    return a - a / b * b;",
+      "}"
+    ],
+    "pow": [
+      "int VidePow(int a, int b) {",
+      "    int r;",
+      "    r = 1;",
+      "    while (b > 0) {",
+      "        r = r * a;",
+      "        b = b - 1;",
+      "    }",
+      "    return r;",
+      "}"
+    ],
+    "abs": [
+      "int VideAbs(int x) {",
+      "    return x < 0 ? -x : x;",
+      "}"
+    ],
+    "sqrt": [
+      "int VideSqrt(int x) {",
+      "    int r;",
+      "    r = 0;",
+      "    while (r < 181 && (r + 1) * (r + 1) <= x) {",
+      "        r = r + 1;",
+      "    }",
+      "    return r;",
+      "}"
+    ],
+    "constrain": [
+      "int VideConstrain(int v, int lo, int hi) {",
+      "    return v < lo ? lo : (v > hi ? hi : v);",
+      "}"
+    ],
+    "random": {
+      "requires": [
+        "mod"
+      ],
+      "code": [
+        "int VideSeed = 12345;",
+        "",
+        "int VideRandom(int a, int b) {",
+        "    VideSeed = VideSeed * 25173 + 13849;",
+        "    return a + VideMod((VideSeed >> 1) & 0x7FFF, b - a + 1);",
+        "}"
+      ]
+    },
+    "prime": {
+      "requires": [
+        "mod"
+      ],
+      "code": [
+        "int VideIsPrime(int n) {",
+        "    int d;",
+        "    if (n < 2) {",
+        "        return 0;",
+        "    }",
+        "    d = 2;",
+        "    while (d <= 181 && d * d <= n) {",
+        "        if (VideMod(n, d) == 0) {",
+        "            return 0;",
+        "        }",
+        "        d = d + 1;",
+        "    }",
+        "    return 1;",
+        "}"
+      ]
+    }
+  },
+  "blocks": {
+    "controls_if": {
+      "if": "if ({{IF}}) {\n{{DO}}}",
+      "elseif": " else if ({{IF}}) {\n{{DO}}}",
+      "else": " else {\n{{DO}}}"
+    },
+    "controls_repeat_ext": {
+      "template": "for ({{$TEMP:count}} = 0; {{$TEMP:count}} < {{TIMES}}; {{$TEMP:count}}++) {\n{{DO}}}",
+      "argOrder": 7
+    },
+    "controls_whileUntil": {
+      "switch": "MODE",
+      "cases": {
+        "WHILE": "while ({{BOOL}}) {\n{{DO}}}",
+        "UNTIL": {
+          "template": "while (!{{BOOL}}) {\n{{DO}}}",
+          "argOrder": 1
+        }
+      }
+    },
+    "controls_for": {
+      "template": "for ({{VAR}} = {{FROM}}; {{VAR}} <= {{TO}}; {{VAR}} += {{BY}}) {\n{{DO}}}",
+      "argOrder": 7
+    },
+    "logic_boolean": {
+      "switch": "BOOL",
+      "cases": {
+        "TRUE": "1",
+        "FALSE": "0"
+      }
+    },
+    "logic_compare": {
+      "switch": "OP",
+      "cases": {
+        "EQ": {
+          "template": "{{A}} == {{B}}",
+          "order": 9
+        },
+        "NEQ": {
+          "template": "{{A}} != {{B}}",
+          "order": 9
+        },
+        "LT": {
+          "template": "{{A}} < {{B}}",
+          "order": 8
+        },
+        "LTE": {
+          "template": "{{A}} <= {{B}}",
+          "order": 8
+        },
+        "GT": {
+          "template": "{{A}} > {{B}}",
+          "order": 8
+        },
+        "GTE": {
+          "template": "{{A}} >= {{B}}",
+          "order": 8
+        }
+      }
+    },
+    "logic_operation": {
+      "switch": "OP",
+      "cases": {
+        "AND": {
+          "template": "{{A}} && {{B}}",
+          "order": 10
+        },
+        "OR": {
+          "template": "{{A}} || {{B}}",
+          "order": 11
+        }
+      }
+    },
+    "logic_negate": {
+      "template": "!{{BOOL}}",
+      "order": 1
+    },
+    "logic_ternary": {
+      "template": "{{IF}} ? {{THEN}} : {{ELSE}}",
+      "order": 12
+    },
+    "math_number": "{{NUM|int}}",
+    "math_arithmetic": {
+      "switch": "OP",
+      "cases": {
+        "ADD": {
+          "template": "{{A}} + {{B}}",
+          "order": 3
+        },
+        "MINUS": {
+          "template": "{{A}} - {{B}}",
+          "order": 3
+        },
+        "MULTIPLY": {
+          "template": "{{A}} * {{B}}",
+          "order": 2
+        },
+        "DIVIDE": {
+          "template": "{{A}} / {{B}}",
+          "order": 2
+        },
+        "POWER": {
+          "template": "VidePow({{A}}, {{B}})",
+          "requires": "pow"
+        }
+      }
+    },
+    "math_single": {
+      "switch": "OP",
+      "cases": {
+        "ROOT": {
+          "template": "VideSqrt({{NUM}})",
+          "requires": "sqrt"
+        },
+        "ABS": {
+          "template": "VideAbs({{NUM}})",
+          "requires": "abs"
+        },
+        "NEG": {
+          "template": "-{{NUM}}",
+          "order": 1
+        }
+      }
+    },
+    "math_round": {
+      "template": "{{NUM}}",
+      "order": 12
+    },
+    "math_modulo": {
+      "template": "VideMod({{DIVIDEND}}, {{DIVISOR}})",
+      "requires": "mod"
+    },
+    "math_constrain": {
+      "template": "VideConstrain({{VALUE}}, {{LOW}}, {{HIGH}})",
+      "requires": "constrain"
+    },
+    "math_random_int": {
+      "template": "VideRandom({{FROM}}, {{TO}})",
+      "requires": "random"
+    },
+    "math_number_property": {
+      "switch": "PROPERTY",
+      "cases": {
+        "EVEN": {
+          "template": "VideMod({{NUMBER_TO_CHECK}}, 2) == 0",
+          "order": 9,
+          "argOrder": 99,
+          "requires": "mod"
+        },
+        "ODD": {
+          "template": "VideMod({{NUMBER_TO_CHECK}}, 2) != 0",
+          "order": 9,
+          "argOrder": 99,
+          "requires": "mod"
+        },
+        "WHOLE": "1",
+        "POSITIVE": {
+          "template": "{{NUMBER_TO_CHECK}} > 0",
+          "order": 8
+        },
+        "NEGATIVE": {
+          "template": "{{NUMBER_TO_CHECK}} < 0",
+          "order": 8
+        },
+        "DIVISIBLE_BY": {
+          "template": "VideMod({{NUMBER_TO_CHECK}}, {{DIVISOR}}) == 0",
+          "order": 9,
+          "argOrder": 99,
+          "requires": "mod"
+        },
+        "PRIME": {
+          "template": "VideIsPrime({{NUMBER_TO_CHECK}})",
+          "requires": "prime"
+        }
+      }
+    },
+    "math_change": "{{VAR}} += {{DELTA}};",
+    "text_print": {
+      "switchType": "TEXT",
+      "cases": {
+        "Number": "svc(1, {{TEXT}});",
+        "Boolean": "svc(1, {{TEXT}});"
+      }
+    },
+    "variables_get": "{{VAR}}",
+    "variables_set": "{{VAR}} = {{VALUE}};",
+    "procedures_callreturn": {
+      "repeat": "ARG",
+      "template": "{{NAME}}({{ITEMS}})"
+    },
+    "procedures_callnoreturn": {
+      "repeat": "ARG",
+      "template": "{{NAME}}({{ITEMS}});"
+    },
+    "procedures_ifreturn": {
+      "switch": "$HAS_RETURN",
+      "cases": {
+        "true": "if ({{CONDITION}}) {\n{{$INDENT}}return {{VALUE}};\n}",
+        "false": "if ({{CONDITION}}) {\n{{$INDENT}}return;\n}"
+      }
+    },
+    "pvm_port_set": {
+      "template": "{{NAME}} = {{VALUE}};",
+      "declare": "volatile int {{NAME}} @ {{ADDR}};"
+    },
+    "pvm_port_get": {
+      "template": "{{NAME}}",
+      "declare": "volatile int {{NAME}} @ {{ADDR}};"
+    },
+    "pvm_svc": {
+      "switch": "$CONNECTED:B",
+      "cases": {
+        "true": "svc({{N}}, {{A}}, {{B}});",
+        "false": {
+          "switch": "$CONNECTED:A",
+          "cases": {
+            "true": "svc({{N}}, {{A}});",
+            "false": "svc({{N}});"
+          }
+        }
+      }
+    },
+    "pvm_svc_value": {
+      "switch": "$CONNECTED:B",
+      "cases": {
+        "true": "svc({{N}}, {{A}}, {{B}})",
+        "false": {
+          "switch": "$CONNECTED:A",
+          "cases": {
+            "true": "svc({{N}}, {{A}})",
+            "false": "svc({{N}})"
+          }
+        }
+      }
+    },
+    "pvm_bit_op": {
+      "switch": "OP",
+      "cases": {
+        "AND": {
+          "template": "{{A}} & {{B}}",
+          "order": 5
+        },
+        "XOR": {
+          "template": "{{A}} ^ {{B}}",
+          "order": 6
+        },
+        "OR": {
+          "template": "{{A}} | {{B}}",
+          "order": 7
+        },
+        "SHL": {
+          "template": "{{A}} << {{B}}",
+          "order": 4
+        },
+        "SHR": {
+          "template": "{{A}} >> {{B}}",
+          "order": 4
+        }
+      }
+    },
+    "pvm_bit_not": {
+      "template": "~{{NUM}}",
+      "order": 1
+    },
+    "pvm_tick": {
+      "template": "Time_GetTick()",
+      "requires": "time"
+    },
+    "pvm_delay": {
+      "template": "Time_Delay({{TICKS}});",
+      "requires": "time"
+    },
+    "pvm_halt": "halt;",
+    "pvm_section": {
+      "template": "",
+      "declare": "section {{KIND}} {{SIZE}};"
+    },
+    "vide_comment": "// {{TEXT}}",
+    "vide_raw_code": "{{CODE}}",
+    "vide_raw_expr": {
+      "template": "{{CODE}}",
+      "order": 99
+    }
+  },
+  "customBlocks": [
+    {
+      "type": "pvm_port_set",
+      "message0": "записать в порт %1 по адресу %2 значение %3",
+      "args0": [
+        {
+          "type": "field_input",
+          "name": "NAME",
+          "text": "LED"
+        },
+        {
+          "type": "field_input",
+          "name": "ADDR",
+          "text": "0x4000"
+        },
+        {
+          "type": "input_value",
+          "name": "VALUE",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#0fbd8c",
+      "tooltip": "Запись в регистр периферии (MMIO): volatile int ИМЯ @ адрес"
+    },
+    {
+      "type": "pvm_port_get",
+      "message0": "порт %1 по адресу %2",
+      "args0": [
+        {
+          "type": "field_input",
+          "name": "NAME",
+          "text": "LED"
+        },
+        {
+          "type": "field_input",
+          "name": "ADDR",
+          "text": "0x4000"
+        }
+      ],
+      "output": "Number",
+      "colour": "#0fbd8c",
+      "tooltip": "Чтение регистра периферии (MMIO)"
+    },
+    {
+      "type": "pvm_svc",
+      "message0": "svc № %1 аргументы %2 %3",
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "N",
+          "value": 1,
+          "min": 0,
+          "precision": 1
+        },
+        {
+          "type": "input_value",
+          "name": "A",
+          "check": "Number"
+        },
+        {
+          "type": "input_value",
+          "name": "B",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#0fbd8c",
+      "tooltip": "Вызов Си-обработчика ВМ (SVC). Пустые входы не передаются. В pvmsim: 0 — тик, 1 — печать числа, 2 — сумма"
+    },
+    {
+      "type": "pvm_svc_value",
+      "message0": "результат svc № %1 аргументы %2 %3",
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "N",
+          "value": 2,
+          "min": 0,
+          "precision": 1
+        },
+        {
+          "type": "input_value",
+          "name": "A",
+          "check": "Number"
+        },
+        {
+          "type": "input_value",
+          "name": "B",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "output": "Number",
+      "colour": "#0fbd8c",
+      "tooltip": "Значение, которое вернул Си-обработчик ВМ (SVC)"
+    },
+    {
+      "type": "pvm_bit_op",
+      "message0": "%1 %2 %3",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "A",
+          "check": "Number"
+        },
+        {
+          "type": "field_dropdown",
+          "name": "OP",
+          "options": [
+            [
+              "И (&)",
+              "AND"
+            ],
+            [
+              "ИЛИ (|)",
+              "OR"
+            ],
+            [
+              "искл. ИЛИ (^)",
+              "XOR"
+            ],
+            [
+              "сдвиг влево (<<)",
+              "SHL"
+            ],
+            [
+              "сдвиг вправо (>>)",
+              "SHR"
+            ]
+          ]
+        },
+        {
+          "type": "input_value",
+          "name": "B",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "output": "Number",
+      "colour": "#0fbd8c",
+      "tooltip": "Побитовые операции над 16-битными словами"
+    },
+    {
+      "type": "pvm_bit_not",
+      "message0": "инвертировать биты %1",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "NUM",
+          "check": "Number"
+        }
+      ],
+      "output": "Number",
+      "colour": "#0fbd8c",
+      "tooltip": "Побитовое НЕ (~)"
+    },
+    {
+      "type": "pvm_tick",
+      "message0": "системный тик",
+      "output": "Number",
+      "colour": "#0fbd8c",
+      "tooltip": "Time_GetTick() из lib/time.hlc"
+    },
+    {
+      "type": "pvm_delay",
+      "message0": "пауза %1 тиков",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "TICKS",
+          "check": "Number"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#0fbd8c",
+      "tooltip": "Time_Delay(тики) из lib/time.hlc"
+    },
+    {
+      "type": "pvm_halt",
+      "message0": "остановить ВМ",
+      "previousStatement": null,
+      "colour": "#0fbd8c",
+      "tooltip": "Инструкция HALT"
+    },
+    {
+      "type": "pvm_section",
+      "message0": "память %1 размер %2",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "KIND",
+          "options": [
+            [
+              "RAM (слов)",
+              "ram"
+            ],
+            [
+              "стек (слов)",
+              "stack"
+            ],
+            [
+              "код (байт)",
+              "code"
+            ]
+          ]
+        },
+        {
+          "type": "field_number",
+          "name": "SIZE",
+          "value": 64,
+          "min": 1,
+          "precision": 1
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#0fbd8c",
+      "tooltip": "Объявление размера памяти целевой ВМ (section): выход за границы — ошибка компиляции"
+    }
+  ],
+  "toolbox": [
+    {
+      "kind": "category",
+      "name": "PVM",
+      "colour": "#0fbd8c",
+      "contents": [
+        {
+          "kind": "block",
+          "type": "pvm_port_set",
+          "inputs": {
+            "VALUE": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 1
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_port_get"
+        },
+        {
+          "kind": "block",
+          "type": "pvm_svc",
+          "inputs": {
+            "A": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 42
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_svc_value",
+          "inputs": {
+            "A": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 3
+                }
+              }
+            },
+            "B": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 4
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_bit_op",
+          "inputs": {
+            "A": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 1
+                }
+              }
+            },
+            "B": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 4
+                }
+              }
+            }
+          },
+          "fields": {
+            "OP": "SHL"
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_bit_not",
+          "inputs": {
+            "NUM": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_tick"
+        },
+        {
+          "kind": "block",
+          "type": "pvm_delay",
+          "inputs": {
+            "TICKS": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 1
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "block",
+          "type": "pvm_section"
+        },
+        {
+          "kind": "block",
+          "type": "pvm_halt"
+        }
+      ]
+    }
+  ],
+  "outputFilter": {
+    "keep": "^pvmsim: SVC print -> (-?\\d+)\\s*$",
+    "replace": "$1"
+  }
+}
