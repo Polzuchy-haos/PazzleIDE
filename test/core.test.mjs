@@ -218,6 +218,39 @@ describe('язык PVM HLC', () => {
     assert.match(code, new RegExp(`${varName} = dvoynoy_shag;`));
   });
 
+  test('блок «начало программы»: в main только его стопка, объявления — отовсюду', () => {
+    const num = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+    const assign = (v) => ({type: 'variables_set', fields: {VAR: {id: 'x'}}, inputs: {VALUE: num(v)}});
+    const ws = load({
+      variables: [{id: 'x', name: 'x'}],
+      blocks: {
+        blocks: [
+          {...assign(99), id: 'LOOSE'},
+          {type: 'pvm_start', id: 'S1', y: 100, next: {block: {...assign(1), next: {block: {type: 'pvm_halt'}}}}},
+          {type: 'pvm_const_define', y: 300, fields: {NAME: 'K'}, inputs: {VALUE: num(5)}},
+          {type: 'pazzle_comment', y: 400, fields: {TEXT: 'комментарий'}},
+          {type: 'pvm_start', id: 'S2', y: 500, next: {block: assign(2)}},
+        ],
+      },
+    });
+    const r = generateCode(pvm, ws);
+    assert.match(r.code, /void main\(\) \{\n {4}x = 1;\n {4}halt;\n\}/);
+    assert.doesNotMatch(r.code, /x = 99|x = 2/);
+    assert.match(r.code, /const int K = 5;/);
+    assert.deepEqual(r.detached, ['LOOSE']); // стопка из одного комментария — не в счёт
+    assert.deepEqual(r.extraEntries, ['S2']);
+  });
+
+  test('без блока «начало программы» выполняются все стопки (старые проекты)', () => {
+    const ws = load({
+      variables: [{id: 'x', name: 'x'}],
+      blocks: {blocks: [{type: 'variables_set', fields: {VAR: {id: 'x'}}, inputs: {VALUE: {block: {type: 'math_number', fields: {NUM: 3}}}}}]},
+    });
+    const r = generateCode(pvm, ws);
+    assert.match(r.code, /x = 3;/);
+    assert.deepEqual(r.detached, []);
+  });
+
   test('имена: HLC -> блоки', () => {
     const ws = load({variables: [{id: 'v', name: 'счёт'}], blocks: {blocks: [{type: 'math_change', fields: {VAR: {id: 'v'}}}]}});
     assert.deepEqual(generateCode(pvm, ws).names, {schyot: 'счёт'});

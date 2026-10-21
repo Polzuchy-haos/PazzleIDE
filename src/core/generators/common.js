@@ -31,5 +31,17 @@ export function generateWithReport(gen, workspace) {
   const unsupported = [...(gen.unsupported_ || [])];
   const warnings = unsupported.map((t) => `Блок «${t}» не поддерживается этим языком`);
   if (gen.types?.warnings) warnings.push(...gen.types.warnings);
-  return {code, warnings, unsupported, lineBlocks: gen.lastLineBlocks || {}, names: gen.lastNames || {}};
+  if (gen.lastDetached?.length) {
+    warnings.push(`Стопок вне «начала программы»: ${gen.lastDetached.length} — они не выполняются`);
+  }
+  if (gen.lastExtraEntries?.length) warnings.push('Блок «начало программы» должен быть один — выполняется верхний');
+  return {
+    code,
+    warnings,
+    unsupported,
+    lineBlocks: gen.lastLineBlocks || {},
+    names: gen.lastNames || {},
+    detached: gen.lastDetached || [], // стопки вне блока начала программы — не выполняются
+    extraEntries: gen.lastExtraEntries || [], // лишние блоки начала программы
+  };
 }

@@ -9,38 +9,25 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "pazzle_comment",
-          "fields": {
-            "TEXT": "Константы вычисляет компилятор, их можно использовать как обычные числа"
-          },
+          "type": "pvm_start",
           "next": {
             "block": {
-              "type": "pvm_const_define",
+              "type": "pazzle_comment",
               "fields": {
-                "NAME": "МИГАНИЙ"
-              },
-              "inputs": {
-                "VALUE": {
-                  "block": {
-                    "type": "math_number",
-                    "fields": {
-                      "NUM": 4
-                    }
-                  }
-                }
+                "TEXT": "Константы вычисляет компилятор, их можно использовать как обычные числа"
               },
               "next": {
                 "block": {
                   "type": "pvm_const_define",
                   "fields": {
-                    "NAME": "ПАУЗА"
+                    "NAME": "МИГАНИЙ"
                   },
                   "inputs": {
                     "VALUE": {
                       "block": {
                         "type": "math_number",
                         "fields": {
-                          "NUM": 50
+                          "NUM": 4
                         }
                       }
                     }
@@ -49,32 +36,14 @@
                     "block": {
                       "type": "pvm_const_define",
                       "fields": {
-                        "NAME": "МАСКА"
+                        "NAME": "ПАУЗА"
                       },
                       "inputs": {
                         "VALUE": {
                           "block": {
-                            "type": "pvm_bit_op",
+                            "type": "math_number",
                             "fields": {
-                              "OP": "SHL"
-                            },
-                            "inputs": {
-                              "A": {
-                                "block": {
-                                  "type": "math_number",
-                                  "fields": {
-                                    "NUM": 1
-                                  }
-                                }
-                              },
-                              "B": {
-                                "block": {
-                                  "type": "math_number",
-                                  "fields": {
-                                    "NUM": 2
-                                  }
-                                }
-                              }
+                              "NUM": 50
                             }
                           }
                         }
@@ -83,21 +52,21 @@
                         "block": {
                           "type": "pvm_const_define",
                           "fields": {
-                            "NAME": "ИТОГ"
+                            "NAME": "МАСКА"
                           },
                           "inputs": {
                             "VALUE": {
                               "block": {
-                                "type": "math_arithmetic",
+                                "type": "pvm_bit_op",
                                 "fields": {
-                                  "OP": "MULTIPLY"
+                                  "OP": "SHL"
                                 },
                                 "inputs": {
                                   "A": {
                                     "block": {
-                                      "type": "pvm_const_get",
+                                      "type": "math_number",
                                       "fields": {
-                                        "NAME": "МИГАНИЙ"
+                                        "NUM": 1
                                       }
                                     }
                                   },
@@ -115,97 +84,133 @@
                           },
                           "next": {
                             "block": {
-                              "type": "variables_set",
+                              "type": "pvm_const_define",
                               "fields": {
-                                "VAR": {
-                                  "id": "count"
-                                }
+                                "NAME": "ИТОГ"
                               },
                               "inputs": {
                                 "VALUE": {
                                   "block": {
-                                    "type": "math_number",
+                                    "type": "math_arithmetic",
                                     "fields": {
-                                      "NUM": 0
+                                      "OP": "MULTIPLY"
+                                    },
+                                    "inputs": {
+                                      "A": {
+                                        "block": {
+                                          "type": "pvm_const_get",
+                                          "fields": {
+                                            "NAME": "МИГАНИЙ"
+                                          }
+                                        }
+                                      },
+                                      "B": {
+                                        "block": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 2
+                                          }
+                                        }
+                                      }
                                     }
                                   }
                                 }
                               },
                               "next": {
                                 "block": {
-                                  "type": "controls_repeat_ext",
+                                  "type": "variables_set",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "count"
+                                    }
+                                  },
                                   "inputs": {
-                                    "TIMES": {
+                                    "VALUE": {
                                       "block": {
-                                        "type": "pvm_const_get",
+                                        "type": "math_number",
                                         "fields": {
-                                          "NAME": "МИГАНИЙ"
+                                          "NUM": 0
                                         }
                                       }
-                                    },
-                                    "DO": {
-                                      "block": {
-                                        "type": "pvm_port_set",
-                                        "fields": {
-                                          "NAME": "LED",
-                                          "ADDR": "0x4000"
-                                        },
-                                        "inputs": {
-                                          "VALUE": {
-                                            "block": {
-                                              "type": "pvm_bit_op",
-                                              "fields": {
-                                                "OP": "XOR"
-                                              },
-                                              "inputs": {
-                                                "A": {
-                                                  "block": {
-                                                    "type": "pvm_port_get",
-                                                    "fields": {
-                                                      "NAME": "LED",
-                                                      "ADDR": "0x4000"
-                                                    }
-                                                  }
-                                                },
-                                                "B": {
-                                                  "block": {
-                                                    "type": "pvm_const_get",
-                                                    "fields": {
-                                                      "NAME": "МАСКА"
-                                                    }
-                                                  }
-                                                }
-                                              }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "controls_repeat_ext",
+                                      "inputs": {
+                                        "TIMES": {
+                                          "block": {
+                                            "type": "pvm_const_get",
+                                            "fields": {
+                                              "NAME": "МИГАНИЙ"
                                             }
                                           }
                                         },
-                                        "next": {
+                                        "DO": {
                                           "block": {
-                                            "type": "math_change",
+                                            "type": "pvm_port_set",
                                             "fields": {
-                                              "VAR": {
-                                                "id": "count"
-                                              }
+                                              "NAME": "LED",
+                                              "ADDR": "0x4000"
                                             },
                                             "inputs": {
-                                              "DELTA": {
+                                              "VALUE": {
                                                 "block": {
-                                                  "type": "math_number",
+                                                  "type": "pvm_bit_op",
                                                   "fields": {
-                                                    "NUM": 1
+                                                    "OP": "XOR"
+                                                  },
+                                                  "inputs": {
+                                                    "A": {
+                                                      "block": {
+                                                        "type": "pvm_port_get",
+                                                        "fields": {
+                                                          "NAME": "LED",
+                                                          "ADDR": "0x4000"
+                                                        }
+                                                      }
+                                                    },
+                                                    "B": {
+                                                      "block": {
+                                                        "type": "pvm_const_get",
+                                                        "fields": {
+                                                          "NAME": "МАСКА"
+                                                        }
+                                                      }
+                                                    }
                                                   }
                                                 }
                                               }
                                             },
                                             "next": {
                                               "block": {
-                                                "type": "pvm_delay",
+                                                "type": "math_change",
+                                                "fields": {
+                                                  "VAR": {
+                                                    "id": "count"
+                                                  }
+                                                },
                                                 "inputs": {
-                                                  "TICKS": {
+                                                  "DELTA": {
                                                     "block": {
-                                                      "type": "pvm_const_get",
+                                                      "type": "math_number",
                                                       "fields": {
-                                                        "NAME": "ПАУЗА"
+                                                        "NUM": 1
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "next": {
+                                                  "block": {
+                                                    "type": "pvm_delay",
+                                                    "inputs": {
+                                                      "TICKS": {
+                                                        "block": {
+                                                          "type": "pvm_const_get",
+                                                          "fields": {
+                                                            "NAME": "ПАУЗА"
+                                                          }
+                                                        }
                                                       }
                                                     }
                                                   }
@@ -214,18 +219,18 @@
                                             }
                                           }
                                         }
-                                      }
-                                    }
-                                  },
-                                  "next": {
-                                    "block": {
-                                      "type": "text_print",
-                                      "inputs": {
-                                        "TEXT": {
-                                          "block": {
-                                            "type": "pvm_const_get",
-                                            "fields": {
-                                              "NAME": "ИТОГ"
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "text_print",
+                                          "inputs": {
+                                            "TEXT": {
+                                              "block": {
+                                                "type": "pvm_const_get",
+                                                "fields": {
+                                                  "NAME": "ИТОГ"
+                                                }
+                                              }
                                             }
                                           }
                                         }

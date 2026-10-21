@@ -191,6 +191,8 @@ function onWorkspaceChange(e) {
 const appliedWarnings = new Map();
 function applyBlockWarnings() {
   const unsupported = new Set(state.generated.unsupported || []);
+  const detached = new Set(state.generated.detached || []);
+  const extraEntries = new Set(state.generated.extraEntries || []);
   const constCount = new Map();
   for (const b of state.ws.getAllBlocks(false)) {
     if (b.type === 'pvm_const_define' && b.isEnabled()) {
@@ -206,6 +208,12 @@ function applyBlockWarnings() {
     }
     if (!text && block.type === 'pvm_const_define' && constCount.get(block.getFieldValue('NAME').trim()) > 1) {
       text = `Константа «${block.getFieldValue('NAME')}» объявлена несколько раз`;
+    }
+    if (!text && detached.has(block.id)) {
+      text = 'Эта стопка не выполняется: присоедините её под блок «▶ начало программы» (категория «Программа»)';
+    }
+    if (!text && extraEntries.has(block.id)) {
+      text = 'Блок «начало программы» должен быть один — выполняется только верхний';
     }
     if ((appliedWarnings.get(block.id) || null) === text) continue;
     block.setWarningText(text);
@@ -224,7 +232,8 @@ function refreshBreakpointVisuals() {
 }
 
 function canHaveBreakpoint(block) {
-  return block && !block.outputConnection && !block.isShadow();
+  // У «начала программы» нет своего кода — останавливаться можно на блоках под ним.
+  return block && !block.outputConnection && !block.isShadow() && block.type !== state.language.pack.entryBlock;
 }
 
 function toggleBreakpoint(block) {
@@ -792,7 +801,9 @@ const commands = {
   async new() {
     if (!confirmDiscard()) return;
     await stop();
-    loadProjectInto(state.ws, {workspace: {}});
+    // Новая программа начинается с блока «▶ начало программы».
+    const entry = state.language.pack.entryBlock;
+    loadProjectInto(state.ws, {workspace: entry ? {blocks: {languageVersion: 0, blocks: [{type: entry, x: 60, y: 60}]}} : {}});
     state.filePath = null;
     state.breakpoints.clear();
     state.build = null;

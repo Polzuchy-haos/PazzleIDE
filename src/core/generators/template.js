@@ -39,6 +39,15 @@ export function extractBlockMarkers(text) {
   return {code: out.join('\n') + '\n', lineBlocks};
 }
 
+/** Есть ли в коде стопки что-то кроме маркеров, пустых строк и комментариев. */
+function isExecutable(code, commentPrefix) {
+  const comment = commentPrefix.trim();
+  return code.split('\n').some((raw) => {
+    const line = raw.trim();
+    return line && !MARKER_LINE.test(raw) && !(comment && line.startsWith(comment));
+  });
+}
+
 export class TemplateGenerator extends Blockly.CodeGenerator {
   constructor(pack) {
     super(pack.name || pack.id);
@@ -141,6 +150,39 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     const {code: clean, lineBlocks} = extractBlockMarkers(program.replace(/^\n+/, ''));
     this.lastLineBlocks = lineBlocks;
     return clean;
+  }
+
+  /**
+   * Как CodeGenerator.workspaceToCode, но с блоком начала программы (pack.entryBlock).
+   * Если он есть, в тело программы попадает только стопка под ним; код остальных
+   * стопок отбрасывается (их объявления — константы, section, порты — остаются),
+   * а сами стопки запоминаются, чтобы интерфейс пометил их как невыполняемые.
+   * Без блока начала всё как раньше: все стопки по порядку.
+   */
+  workspaceToCode(workspace) {
+    this.init(workspace);
+    const tops = workspace.getTopBlocks(true);
+    const entryType = this.pack.entryBlock;
+    const entries = entryType ? tops.filter((b) => b.type === entryType && b.isEnabled()) : [];
+    const entry = entries[0] || null;
+    this.lastDetached = [];
+    this.lastExtraEntries = entries.slice(1).map((b) => b.id);
+    const parts = [];
+    for (const block of tops) {
+      let line = this.blockToCode(block);
+      if (Array.isArray(line)) line = line[0];
+      if (!line) continue;
+      if (block.outputConnection) line = this.injectId(this.STATEMENT_PREFIX, block) + this.scrubNakedValue(line);
+      if (entry && block !== entry) {
+        const extraEntry = block.type === entryType; // у лишнего «начала» своё предупреждение
+        if (!extraEntry && isExecutable(line, this.lineComment(''))) this.lastDetached.push(block.id);
+        continue;
+      }
+      parts.push(line);
+    }
+    let code = this.finish(parts.join('\n'));
+    code = code.replace(/^\s+\n/, '').replace(/\n\s+$/, '\n').replace(/[ \t]+\n/g, '\n');
+    return code;
   }
 
   scrubNakedValue(line) {

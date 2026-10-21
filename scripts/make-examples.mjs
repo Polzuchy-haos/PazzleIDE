@@ -29,6 +29,8 @@ function seq(...blocks) {
   return list[0];
 }
 const stmt = (...blocks) => ({block: seq(...blocks)});
+// Главная стопка программы — под блоком «▶ начало программы».
+const start = (...blocks) => ({type: 'pvm_start', next: {block: seq(...blocks)}});
 const repeat = (times, body) => ({type: 'controls_repeat_ext', inputs: {TIMES: times, DO: stmt(...body)}});
 const forRange = (id, from, to, body) => ({
   type: 'controls_for',
@@ -64,7 +66,7 @@ examples['01-migalka'] = project(
   'Переключает бит порта LED (0x4000) и считает переключения. Работает и в симуляторе, и на плате.',
   [['count', 'переключений']],
   [
-    seq(
+    start(
       comment('Мигаем светодиодом 6 раз'),
       section('ram', 64),
       set('count', n(0)),
@@ -96,7 +98,7 @@ examples['02-faktorial'] = project(
         RETURN: arith('MULTIPLY', get('n'), call('факториал', ['n'], [arith('MINUS', get('n'), n(1))])),
       },
     },
-    seq(set('result', call('факториал', ['n'], [n(7)])), print(get('result'))),
+    start(set('result', call('факториал', ['n'], [n(7)])), print(get('result'))),
   ],
 );
 
@@ -105,7 +107,7 @@ examples['03-prostye-chisla'] = project(
   'Считает простые числа от 2 до 50: сколько их и какое последнее. Ответ: 15 и 47.',
   [['i', 'i'], ['count', 'сколько'], ['last', 'последнее']],
   [
-    seq(
+    start(
       set('count', n(0)),
       set('last', n(0)),
       forRange('i', n(2), n(50), [
@@ -124,7 +126,7 @@ examples['04-begushchiy-ogon'] = project(
   'Сдвигает единичный бит по 8 разрядам порта LED: 1, 2, 4 … 128.',
   [['bit', 'бит']],
   [
-    seq(
+    start(
       set('bit', n(1)),
       repeat(n(8), [portSet(get('bit')), set('bit', bits('SHL', get('bit'), n(1))), pause(n(50))]),
       portSet(n(0)),
@@ -137,7 +139,7 @@ examples['05-konstanty'] = project(
   'Именованные константы: число мигания, пауза, маска бита и константа, вычисленная из другой. В RAM они не попадают.',
   [['count', 'счёт']],
   [
-    seq(
+    start(
       comment('Константы вычисляет компилятор, их можно использовать как обычные числа'),
       constDef('МИГАНИЙ', n(4)),
       constDef('ПАУЗА', n(50)),

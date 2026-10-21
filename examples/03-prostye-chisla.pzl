@@ -9,28 +9,13 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "variables_set",
-          "fields": {
-            "VAR": {
-              "id": "count"
-            }
-          },
-          "inputs": {
-            "VALUE": {
-              "block": {
-                "type": "math_number",
-                "fields": {
-                  "NUM": 0
-                }
-              }
-            }
-          },
+          "type": "pvm_start",
           "next": {
             "block": {
               "type": "variables_set",
               "fields": {
                 "VAR": {
-                  "id": "last"
+                  "id": "count"
                 }
               },
               "inputs": {
@@ -45,89 +30,67 @@
               },
               "next": {
                 "block": {
-                  "type": "controls_for",
+                  "type": "variables_set",
                   "fields": {
                     "VAR": {
-                      "id": "i"
+                      "id": "last"
                     }
                   },
                   "inputs": {
-                    "FROM": {
+                    "VALUE": {
                       "block": {
                         "type": "math_number",
                         "fields": {
-                          "NUM": 2
+                          "NUM": 0
                         }
                       }
-                    },
-                    "TO": {
-                      "block": {
-                        "type": "math_number",
-                        "fields": {
-                          "NUM": 50
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "controls_for",
+                      "fields": {
+                        "VAR": {
+                          "id": "i"
                         }
-                      }
-                    },
-                    "BY": {
-                      "block": {
-                        "type": "math_number",
-                        "fields": {
-                          "NUM": 1
-                        }
-                      }
-                    },
-                    "DO": {
-                      "block": {
-                        "type": "controls_if",
-                        "inputs": {
-                          "IF0": {
-                            "block": {
-                              "type": "math_number_property",
-                              "fields": {
-                                "PROPERTY": "PRIME"
-                              },
-                              "inputs": {
-                                "NUMBER_TO_CHECK": {
-                                  "block": {
-                                    "type": "variables_get",
-                                    "fields": {
-                                      "VAR": {
-                                        "id": "i"
-                                      }
-                                    }
-                                  }
-                                }
-                              }
+                      },
+                      "inputs": {
+                        "FROM": {
+                          "block": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 2
                             }
-                          },
-                          "DO0": {
-                            "block": {
-                              "type": "math_change",
-                              "fields": {
-                                "VAR": {
-                                  "id": "count"
-                                }
-                              },
-                              "inputs": {
-                                "DELTA": {
-                                  "block": {
-                                    "type": "math_number",
-                                    "fields": {
-                                      "NUM": 1
-                                    }
-                                  }
-                                }
-                              },
-                              "next": {
+                          }
+                        },
+                        "TO": {
+                          "block": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 50
+                            }
+                          }
+                        },
+                        "BY": {
+                          "block": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 1
+                            }
+                          }
+                        },
+                        "DO": {
+                          "block": {
+                            "type": "controls_if",
+                            "inputs": {
+                              "IF0": {
                                 "block": {
-                                  "type": "variables_set",
+                                  "type": "math_number_property",
                                   "fields": {
-                                    "VAR": {
-                                      "id": "last"
-                                    }
+                                    "PROPERTY": "PRIME"
                                   },
                                   "inputs": {
-                                    "VALUE": {
+                                    "NUMBER_TO_CHECK": {
                                       "block": {
                                         "type": "variables_get",
                                         "fields": {
@@ -139,23 +102,65 @@
                                     }
                                   }
                                 }
+                              },
+                              "DO0": {
+                                "block": {
+                                  "type": "math_change",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "count"
+                                    }
+                                  },
+                                  "inputs": {
+                                    "DELTA": {
+                                      "block": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 1
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "variables_set",
+                                      "fields": {
+                                        "VAR": {
+                                          "id": "last"
+                                        }
+                                      },
+                                      "inputs": {
+                                        "VALUE": {
+                                          "block": {
+                                            "type": "variables_get",
+                                            "fields": {
+                                              "VAR": {
+                                                "id": "i"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
                               }
                             }
                           }
                         }
-                      }
-                    }
-                  },
-                  "next": {
-                    "block": {
-                      "type": "text_print",
-                      "inputs": {
-                        "TEXT": {
-                          "block": {
-                            "type": "variables_get",
-                            "fields": {
-                              "VAR": {
-                                "id": "count"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "inputs": {
+                            "TEXT": {
+                              "block": {
+                                "type": "variables_get",
+                                "fields": {
+                                  "VAR": {
+                                    "id": "count"
+                                  }
+                                }
                               }
                             }
                           }

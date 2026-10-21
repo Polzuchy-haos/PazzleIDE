@@ -132,45 +132,50 @@
           "y": 40
         },
         {
-          "type": "variables_set",
-          "fields": {
-            "VAR": {
-              "id": "result"
-            }
-          },
-          "inputs": {
-            "VALUE": {
-              "block": {
-                "type": "procedures_callreturn",
-                "extraState": {
-                  "name": "факториал",
-                  "params": [
-                    "n"
-                  ]
-                },
-                "inputs": {
-                  "ARG0": {
-                    "block": {
-                      "type": "math_number",
-                      "fields": {
-                        "NUM": 7
+          "type": "pvm_start",
+          "next": {
+            "block": {
+              "type": "variables_set",
+              "fields": {
+                "VAR": {
+                  "id": "result"
+                }
+              },
+              "inputs": {
+                "VALUE": {
+                  "block": {
+                    "type": "procedures_callreturn",
+                    "extraState": {
+                      "name": "факториал",
+                      "params": [
+                        "n"
+                      ]
+                    },
+                    "inputs": {
+                      "ARG0": {
+                        "block": {
+                          "type": "math_number",
+                          "fields": {
+                            "NUM": 7
+                          }
+                        }
                       }
                     }
                   }
                 }
-              }
-            }
-          },
-          "next": {
-            "block": {
-              "type": "text_print",
-              "inputs": {
-                "TEXT": {
-                  "block": {
-                    "type": "variables_get",
-                    "fields": {
-                      "VAR": {
-                        "id": "result"
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "variables_get",
+                        "fields": {
+                          "VAR": {
+                            "id": "result"
+                          }
+                        }
                       }
                     }
                   }

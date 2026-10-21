@@ -57,6 +57,7 @@ node src/cli/pazzle.mjs hlc examples/02-faktorial.pzl
 | `variables` | | Объявления переменных: `declaration`, `section`, `separator`, `declareTemps` |
 | `functions` | | Определения функций: `noReturn`, `withReturn`, `param`, `paramSeparator`, `paramsWrap`, `prototype`, `separator` |
 | `program` | | Каркас программы (см. ниже) |
+| `entryBlock` | | Блок начала программы: если он есть, в `{{BODY}}` попадает только стопка под ним, код остальных стопок отбрасывается (их объявления остаются), а сами стопки помечаются как невыполняемые |
 | `nakedValue` | | Как записать выражение, стоящее отдельно (`{{CODE}}`) |
 | `helpers` | | Вспомогательный код, который добавляется только при использовании |
 | `customBlocks` | | Свои блоки в формате JSON Blockly |
@@ -197,6 +198,9 @@ node src/cli/pazzle.mjs hlc examples/02-faktorial.pzl
 "pvm_const_define": {"template": "", "declare": "const int {{NAME|constname}} = {{VALUE}};", "declareOrder": 10},
 "pvm_const_get": "{{NAME|constname}}"
 ```
+
+Категория из `toolbox` с `"first": true` встаёт в начало палитры (так «Программа» с блоком начала стоит
+первой, как «События» в Scratch).
 
 Категория палитры может быть динамической (`"custom": "PVM_CONSTANTS"`): её содержимое строит интерфейс.
 Для констант это блок нового объявления и блоки всех уже объявленных констант.

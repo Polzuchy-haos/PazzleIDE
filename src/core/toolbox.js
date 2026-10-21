@@ -66,5 +66,9 @@ export const BASE_CATEGORIES = [
 /** Палитра: базовые категории + категории из описания языка. */
 export function buildToolbox(language) {
   const extra = language?.pack?.toolbox || [];
-  return {kind: 'categoryToolbox', contents: [...BASE_CATEGORIES, ...extra]};
+  // "first": true — категория встаёт в начало палитры (как «События» в Scratch).
+  const strip = ({first, ...category}) => category;
+  const head = extra.filter((c) => c.first).map(strip);
+  const tail = extra.filter((c) => !c.first).map(strip);
+  return {kind: 'categoryToolbox', contents: [...head, ...BASE_CATEGORIES, ...tail]};
 }

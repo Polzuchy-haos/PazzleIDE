@@ -4,6 +4,7 @@
   "description": "Высокоуровневый язык стековой виртуальной машины PVM для микроконтроллеров. Сборкой (pvmcc, pvmc), запуском и отладкой (pvmsim, pvmdbg) управляет PazzleIDE.",
   "fileExtension": "hlc",
   "fileName": "main.hlc",
+  "entryBlock": "pvm_start",
   "editorLanguage": "c",
   "indent": "    ",
   "lineComment": "//",
@@ -454,9 +455,17 @@
       "declare": "const int {{NAME|constname}} = {{VALUE}};",
       "declareOrder": 10
     },
-    "pvm_const_get": "{{NAME|constname}}"
+    "pvm_const_get": "{{NAME|constname}}",
+    "pvm_start": ""
   },
   "customBlocks": [
+    {
+      "type": "pvm_start",
+      "message0": "▶ начало программы",
+      "nextStatement": null,
+      "style": "hat_blocks",
+      "tooltip": "С этого блока начинается выполнение (функция main). Стопки, не присоединённые к нему, не выполняются; объявления (константы, память, функции) работают где угодно."
+    },
     {
       "type": "pvm_port_set",
       "message0": "записать в порт %1 по адресу %2 значение %3",
@@ -718,6 +727,18 @@
     }
   ],
   "toolbox": [
+    {
+      "kind": "category",
+      "name": "Программа",
+      "colour": "#FFBF00",
+      "first": true,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "pvm_start"
+        }
+      ]
+    },
     {
       "kind": "category",
       "name": "Константы",

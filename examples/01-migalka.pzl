@@ -9,110 +9,115 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "pazzle_comment",
-          "fields": {
-            "TEXT": "Мигаем светодиодом 6 раз"
-          },
+          "type": "pvm_start",
           "next": {
             "block": {
-              "type": "pvm_section",
+              "type": "pazzle_comment",
               "fields": {
-                "KIND": "ram",
-                "SIZE": 64
+                "TEXT": "Мигаем светодиодом 6 раз"
               },
               "next": {
                 "block": {
-                  "type": "variables_set",
+                  "type": "pvm_section",
                   "fields": {
-                    "VAR": {
-                      "id": "count"
-                    }
-                  },
-                  "inputs": {
-                    "VALUE": {
-                      "block": {
-                        "type": "math_number",
-                        "fields": {
-                          "NUM": 0
-                        }
-                      }
-                    }
+                    "KIND": "ram",
+                    "SIZE": 64
                   },
                   "next": {
                     "block": {
-                      "type": "controls_repeat_ext",
+                      "type": "variables_set",
+                      "fields": {
+                        "VAR": {
+                          "id": "count"
+                        }
+                      },
                       "inputs": {
-                        "TIMES": {
+                        "VALUE": {
                           "block": {
                             "type": "math_number",
                             "fields": {
-                              "NUM": 6
+                              "NUM": 0
                             }
                           }
-                        },
-                        "DO": {
-                          "block": {
-                            "type": "pvm_port_set",
-                            "fields": {
-                              "NAME": "LED",
-                              "ADDR": "0x4000"
-                            },
-                            "inputs": {
-                              "VALUE": {
-                                "block": {
-                                  "type": "pvm_bit_op",
-                                  "fields": {
-                                    "OP": "XOR"
-                                  },
-                                  "inputs": {
-                                    "A": {
-                                      "block": {
-                                        "type": "pvm_port_get",
-                                        "fields": {
-                                          "NAME": "LED",
-                                          "ADDR": "0x4000"
-                                        }
-                                      }
-                                    },
-                                    "B": {
-                                      "block": {
-                                        "type": "math_number",
-                                        "fields": {
-                                          "NUM": 1
-                                        }
-                                      }
-                                    }
-                                  }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "controls_repeat_ext",
+                          "inputs": {
+                            "TIMES": {
+                              "block": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 6
                                 }
                               }
                             },
-                            "next": {
+                            "DO": {
                               "block": {
-                                "type": "math_change",
+                                "type": "pvm_port_set",
                                 "fields": {
-                                  "VAR": {
-                                    "id": "count"
-                                  }
+                                  "NAME": "LED",
+                                  "ADDR": "0x4000"
                                 },
                                 "inputs": {
-                                  "DELTA": {
+                                  "VALUE": {
                                     "block": {
-                                      "type": "math_number",
+                                      "type": "pvm_bit_op",
                                       "fields": {
-                                        "NUM": 1
+                                        "OP": "XOR"
+                                      },
+                                      "inputs": {
+                                        "A": {
+                                          "block": {
+                                            "type": "pvm_port_get",
+                                            "fields": {
+                                              "NAME": "LED",
+                                              "ADDR": "0x4000"
+                                            }
+                                          }
+                                        },
+                                        "B": {
+                                          "block": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 1
+                                            }
+                                          }
+                                        }
                                       }
                                     }
                                   }
                                 },
                                 "next": {
                                   "block": {
-                                    "type": "pvm_delay",
+                                    "type": "math_change",
+                                    "fields": {
+                                      "VAR": {
+                                        "id": "count"
+                                      }
+                                    },
                                     "inputs": {
-                                      "TICKS": {
+                                      "DELTA": {
                                         "block": {
                                           "type": "math_number",
                                           "fields": {
-                                            "NUM": 100
+                                            "NUM": 1
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "block": {
+                                        "type": "pvm_delay",
+                                        "inputs": {
+                                          "TICKS": {
+                                            "block": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 100
+                                              }
+                                            }
                                           }
                                         }
                                       }
@@ -121,22 +126,22 @@
                                 }
                               }
                             }
-                          }
-                        }
-                      },
-                      "next": {
-                        "block": {
-                          "type": "pvm_port_set",
-                          "fields": {
-                            "NAME": "LED",
-                            "ADDR": "0x4000"
                           },
-                          "inputs": {
-                            "VALUE": {
-                              "block": {
-                                "type": "math_number",
-                                "fields": {
-                                  "NUM": 0
+                          "next": {
+                            "block": {
+                              "type": "pvm_port_set",
+                              "fields": {
+                                "NAME": "LED",
+                                "ADDR": "0x4000"
+                              },
+                              "inputs": {
+                                "VALUE": {
+                                  "block": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 0
+                                    }
+                                  }
                                 }
                               }
                             }
