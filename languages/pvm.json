@@ -456,7 +456,8 @@
       "declareOrder": 10
     },
     "pvm_const_get": "{{NAME|constname}}",
-    "pvm_start": ""
+    "pvm_start": "",
+    "pvm_end": "halt;"
   },
   "customBlocks": [
     {
@@ -465,6 +466,13 @@
       "nextStatement": null,
       "style": "hat_blocks",
       "tooltip": "С этого блока начинается выполнение (функция main). Стопки, не присоединённые к нему, не выполняются; объявления (константы, память, функции) работают где угодно."
+    },
+    {
+      "type": "pvm_end",
+      "message0": "■ конец программы",
+      "previousStatement": null,
+      "style": "hat_blocks",
+      "tooltip": "Здесь программа заканчивается (инструкция HALT). Ниже ничего присоединить нельзя. Без этого блока программа тоже завершается, дойдя до конца."
     },
     {
       "type": "pvm_port_set",
@@ -736,6 +744,10 @@
         {
           "kind": "block",
           "type": "pvm_start"
+        },
+        {
+          "kind": "block",
+          "type": "pvm_end"
         }
       ]
     },
@@ -864,10 +876,6 @@
         {
           "kind": "block",
           "type": "pvm_section"
-        },
-        {
-          "kind": "block",
-          "type": "pvm_halt"
         }
       ]
     }

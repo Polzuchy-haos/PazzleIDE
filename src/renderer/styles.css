@@ -327,7 +327,7 @@ button svg .fill-path { fill: currentColor; }
 
 /* Точка останова на блоке и текущий блок при отладке. */
 .pz-bp > .blocklyPath { stroke: #e5534b !important; stroke-width: 4px !important; }
-.pz-current > .blocklyPath { stroke: #ffd400 !important; stroke-width: 4px !important; }
+.pz-current > .blocklyPath { stroke: #ffffff !important; stroke-width: 3px !important; filter: drop-shadow(0 0 3px #ffd400) drop-shadow(0 0 6px #ffd400); }
 
 /* Monaco: точки останова в поле слева и текущая строка. */
 .pz-bp-glyph::before { content: ''; display: block; width: 10px; height: 10px; margin: 4px 0 0 4px; border-radius: 50%; background: #e5534b; }

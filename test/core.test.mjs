@@ -241,6 +241,24 @@ describe('язык PVM HLC', () => {
     assert.deepEqual(r.extraEntries, ['S2']);
   });
 
+  test('блок «конец программы» — halt; в конце main', () => {
+    const ws = load({
+      variables: [{id: 'x', name: 'x'}],
+      blocks: {
+        blocks: [
+          {
+            type: 'pvm_start',
+            next: {block: {type: 'variables_set', fields: {VAR: {id: 'x'}}, inputs: {VALUE: {block: {type: 'math_number', fields: {NUM: 1}}}}, next: {block: {type: 'pvm_end', id: 'END'}}}},
+          },
+        ],
+      },
+    });
+    const r = generateCode(pvm, ws);
+    assert.match(r.code, /void main\(\) \{\n {4}x = 1;\n {4}halt;\n\}/);
+    assert.ok(Object.values(r.lineBlocks).includes('END'), 'на блок конца можно поставить точку останова');
+    assert.equal(ws.getBlockById('END').nextConnection, null, 'ниже «конца» ничего не присоединить');
+  });
+
   test('без блока «начало программы» выполняются все стопки (старые проекты)', () => {
     const ws = load({
       variables: [{id: 'x', name: 'x'}],

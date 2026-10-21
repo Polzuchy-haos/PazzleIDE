@@ -29,8 +29,8 @@ function seq(...blocks) {
   return list[0];
 }
 const stmt = (...blocks) => ({block: seq(...blocks)});
-// Главная стопка программы — под блоком «▶ начало программы».
-const start = (...blocks) => ({type: 'pvm_start', next: {block: seq(...blocks)}});
+// Главная стопка программы — между «▶ начало программы» и «■ конец программы».
+const start = (...blocks) => ({type: 'pvm_start', next: {block: seq(...blocks, {type: 'pvm_end'})}});
 const repeat = (times, body) => ({type: 'controls_repeat_ext', inputs: {TIMES: times, DO: stmt(...body)}});
 const forRange = (id, from, to, body) => ({
   type: 'controls_for',

@@ -801,9 +801,10 @@ const commands = {
   async new() {
     if (!confirmDiscard()) return;
     await stop();
-    // Новая программа начинается с блока «▶ начало программы».
+    // Новая программа — пара «▶ начало программы» … «■ конец программы»; блоки вставляются между ними.
     const entry = state.language.pack.entryBlock;
-    loadProjectInto(state.ws, {workspace: entry ? {blocks: {languageVersion: 0, blocks: [{type: entry, x: 60, y: 60}]}} : {}});
+    const start = entry && {type: entry, x: 60, y: 60, ...(Blockly.Blocks.pvm_end ? {next: {block: {type: 'pvm_end'}}} : {})};
+    loadProjectInto(state.ws, {workspace: start ? {blocks: {languageVersion: 0, blocks: [start]}} : {}});
     state.filePath = null;
     state.breakpoints.clear();
     state.build = null;

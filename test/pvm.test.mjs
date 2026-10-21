@@ -159,6 +159,25 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
     assert.equal(f.push(r.stdout) + f.flush(), '15\n');
   });
 
+  test('программа завершается на блоке «конец программы»', async () => {
+    const {build: b, lineBlocks, ws} = await build('03-prostye-chisla.pzl');
+    const end = ws.getAllBlocks(false).find((x) => x.type === 'pvm_end');
+    const line = Number(Object.entries(lineBlocks).find(([, id]) => id === end.id)[0]);
+    const {s, next} = session(b.files);
+    let wait = next();
+    await s.start();
+    await wait;
+    await s.setBreakpoints([line]); // HALT сам по себе причина остановки: агент сообщает «halted»
+    wait = next();
+    s.continue();
+    const st = await wait;
+    assert.ok(['breakpoint', 'halted'].includes(st.reason), st.reason);
+    assert.equal(st.line, line); // подсвечен блок «конец программы»
+    assert.match(st.instruction, /^HALT/);
+    assert.equal(vars(st).OUT, 15);
+    await s.stop();
+  });
+
   test('шаг с обходом не заходит в функцию', async () => {
     const {build: b, code} = await build('02-faktorial.pzl');
     const callLine = code.split('\n').findIndex((l) => /rezultat = faktorial/.test(l)) + 1;
