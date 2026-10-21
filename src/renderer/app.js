@@ -116,11 +116,25 @@ function injectWorkspace() {
   });
   ws.addChangeListener(onWorkspaceChange);
   ws.registerToolboxCategoryCallback('PVM_CONSTANTS', constantsFlyout);
+  ws.registerToolboxCategoryCallback('VARIABLE', variablesFlyout);
   state.ws = ws;
   return ws;
 }
 
 // ---------------------------------------------------------------- константы
+
+/** Категория «Переменные»: стандартные блоки Blockly + «локальная переменная» для функций. */
+function variablesFlyout(ws) {
+  const items = Blockly.Variables.flyoutCategory(ws, false);
+  const localType = state.language.pack.localBlock;
+  if (!localType) return items;
+  const first = ws.getVariableMap().getAllVariables()[0];
+  items.push(
+    {kind: 'label', text: 'Только внутри функции — своя копия у каждого вызова:'},
+    {kind: 'block', type: localType, ...(first ? {fields: {VAR: {name: first.getName()}}} : {})},
+  );
+  return items;
+}
 
 /** Имена объявленных констант по порядку (без повторов). */
 function definedConstants(ws = state.ws) {
@@ -193,6 +207,7 @@ function applyBlockWarnings() {
   const unsupported = new Set(state.generated.unsupported || []);
   const detached = new Set(state.generated.detached || []);
   const extraEntries = new Set(state.generated.extraEntries || []);
+  const misplacedLocals = new Set(state.generated.misplacedLocals || []);
   const constCount = new Map();
   for (const b of state.ws.getAllBlocks(false)) {
     if (b.type === 'pvm_const_define' && b.isEnabled()) {
@@ -211,6 +226,9 @@ function applyBlockWarnings() {
     }
     if (!text && detached.has(block.id)) {
       text = 'Эта стопка не выполняется: присоедините её под блок «▶ начало программы» (категория «Программа»)';
+    }
+    if (!text && misplacedLocals.has(block.id)) {
+      text = 'Локальная переменная работает только внутри функции — здесь это обычное присваивание глобальной';
     }
     if (!text && extraEntries.has(block.id)) {
       text = 'Блок «начало программы» должен быть один — выполняется только верхний';

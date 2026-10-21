@@ -1,0 +1,292 @@
+{
+  "format": "pazzleide-project",
+  "version": 1,
+  "language": "pvm",
+  "title": "Локальные переменные",
+  "description": "Числа Фибоначчи рекурсией: у каждого вызова свои «левое» и «правое». С глобальными переменными вложенный вызов затёр бы их. Ответ: 55.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "procedures_defreturn",
+          "fields": {
+            "NAME": "фибоначчи"
+          },
+          "extraState": {
+            "params": [
+              {
+                "name": "n",
+                "id": "n"
+              }
+            ]
+          },
+          "inputs": {
+            "STACK": {
+              "block": {
+                "type": "procedures_ifreturn",
+                "extraState": "<mutation value=\"1\"></mutation>",
+                "inputs": {
+                  "CONDITION": {
+                    "block": {
+                      "type": "logic_compare",
+                      "fields": {
+                        "OP": "LTE"
+                      },
+                      "inputs": {
+                        "A": {
+                          "block": {
+                            "type": "variables_get",
+                            "fields": {
+                              "VAR": {
+                                "id": "n"
+                              }
+                            }
+                          }
+                        },
+                        "B": {
+                          "block": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "VALUE": {
+                    "block": {
+                      "type": "variables_get",
+                      "fields": {
+                        "VAR": {
+                          "id": "n"
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "block": {
+                    "type": "pvm_local",
+                    "fields": {
+                      "VAR": {
+                        "id": "left"
+                      }
+                    },
+                    "inputs": {
+                      "VALUE": {
+                        "block": {
+                          "type": "procedures_callreturn",
+                          "extraState": {
+                            "name": "фибоначчи",
+                            "params": [
+                              "n"
+                            ]
+                          },
+                          "inputs": {
+                            "ARG0": {
+                              "block": {
+                                "type": "math_arithmetic",
+                                "fields": {
+                                  "OP": "MINUS"
+                                },
+                                "inputs": {
+                                  "A": {
+                                    "block": {
+                                      "type": "variables_get",
+                                      "fields": {
+                                        "VAR": {
+                                          "id": "n"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "B": {
+                                    "block": {
+                                      "type": "math_number",
+                                      "fields": {
+                                        "NUM": 1
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "pvm_local",
+                        "fields": {
+                          "VAR": {
+                            "id": "right"
+                          }
+                        },
+                        "inputs": {
+                          "VALUE": {
+                            "block": {
+                              "type": "procedures_callreturn",
+                              "extraState": {
+                                "name": "фибоначчи",
+                                "params": [
+                                  "n"
+                                ]
+                              },
+                              "inputs": {
+                                "ARG0": {
+                                  "block": {
+                                    "type": "math_arithmetic",
+                                    "fields": {
+                                      "OP": "MINUS"
+                                    },
+                                    "inputs": {
+                                      "A": {
+                                        "block": {
+                                          "type": "variables_get",
+                                          "fields": {
+                                            "VAR": {
+                                              "id": "n"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "B": {
+                                        "block": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 2
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "RETURN": {
+              "block": {
+                "type": "math_arithmetic",
+                "fields": {
+                  "OP": "ADD"
+                },
+                "inputs": {
+                  "A": {
+                    "block": {
+                      "type": "variables_get",
+                      "fields": {
+                        "VAR": {
+                          "id": "left"
+                        }
+                      }
+                    }
+                  },
+                  "B": {
+                    "block": {
+                      "type": "variables_get",
+                      "fields": {
+                        "VAR": {
+                          "id": "right"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 40
+        },
+        {
+          "type": "pvm_start",
+          "next": {
+            "block": {
+              "type": "variables_set",
+              "fields": {
+                "VAR": {
+                  "id": "answer"
+                }
+              },
+              "inputs": {
+                "VALUE": {
+                  "block": {
+                    "type": "procedures_callreturn",
+                    "extraState": {
+                      "name": "фибоначчи",
+                      "params": [
+                        "n"
+                      ]
+                    },
+                    "inputs": {
+                      "ARG0": {
+                        "block": {
+                          "type": "math_number",
+                          "fields": {
+                            "NUM": 10
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "variables_get",
+                        "fields": {
+                          "VAR": {
+                            "id": "answer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "pvm_end"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 40,
+          "y": 480
+        }
+      ]
+    },
+    "variables": [
+      {
+        "id": "n",
+        "name": "n"
+      },
+      {
+        "id": "left",
+        "name": "левое"
+      },
+      {
+        "id": "right",
+        "name": "правое"
+      },
+      {
+        "id": "answer",
+        "name": "ответ"
+      }
+    ]
+  }
+}

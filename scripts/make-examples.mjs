@@ -53,7 +53,7 @@ function project(title, description, vars, topBlocks) {
     title,
     description,
     workspace: {
-      blocks: {languageVersion: 0, blocks: topBlocks.map((b, i) => ({...b, x: 40, y: 40 + i * 300}))},
+      blocks: {languageVersion: 0, blocks: topBlocks.map((b, i) => ({...b, x: 40, y: 40 + i * 440}))},
       variables: vars.map(([id, name]) => ({id, name})),
     },
   };
@@ -153,6 +153,32 @@ examples['05-konstanty'] = project(
       ]),
       print(constGet('ИТОГ')),
     ),
+  ],
+);
+
+examples['06-lokalnye-peremennye'] = project(
+  'Локальные переменные',
+  'Числа Фибоначчи рекурсией: у каждого вызова свои «левое» и «правое». С глобальными переменными вложенный вызов затёр бы их. Ответ: 55.',
+  [['n', 'n'], ['left', 'левое'], ['right', 'правое'], ['answer', 'ответ']],
+  [
+    {
+      type: 'procedures_defreturn',
+      fields: {NAME: 'фибоначчи'},
+      extraState: {params: [{name: 'n', id: 'n'}]},
+      inputs: {
+        STACK: stmt(
+          {
+            type: 'procedures_ifreturn',
+            extraState: '<mutation value="1"></mutation>',
+            inputs: {CONDITION: cmp('LTE', get('n'), n(1)), VALUE: get('n')},
+          },
+          {type: 'pvm_local', fields: {VAR: {id: 'left'}}, inputs: {VALUE: call('фибоначчи', ['n'], [arith('MINUS', get('n'), n(1))])}},
+          {type: 'pvm_local', fields: {VAR: {id: 'right'}}, inputs: {VALUE: call('фибоначчи', ['n'], [arith('MINUS', get('n'), n(2))])}},
+        ),
+        RETURN: arith('ADD', get('left'), get('right')),
+      },
+    },
+    start(set('answer', call('фибоначчи', ['n'], [n(10)])), print(get('answer'))),
   ],
 );
 

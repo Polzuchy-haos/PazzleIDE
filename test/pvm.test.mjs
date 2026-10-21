@@ -68,6 +68,7 @@ const EXPECTED = {
   '03-prostye-chisla.pzl': {skolko: 15, poslednee: 47, OUT: 15},
   '04-begushchiy-ogon.pzl': {bit: 256, LED: 0},
   '05-konstanty.pzl': {schyot: 4, LED: 0, OUT: 8},
+  '06-lokalnye-peremennye.pzl': {otvet: 55, OUT: 55},
 };
 
 describe('PVM: сборка и выполнение примеров в симуляторе', {skip, timeout: 120_000}, () => {
@@ -157,6 +158,28 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
     const r = spawnSync(tools.found.pvmsim, [b.files.bin], {encoding: 'utf8', maxBuffer: 64 << 20});
     const f = createLineFilter(pvm.pack.outputFilter);
     assert.equal(f.push(r.stdout) + f.flush(), '15\n');
+  });
+
+  test('локальные переменные: у каждого кадра рекурсии свои значения', async () => {
+    const {build: b, code} = await build('06-lokalnye-peremennye.pzl');
+    const line = code.split('\n').findIndex((l) => /return levoe \+ pravoe;/.test(l)) + 1;
+    const {s, next} = session(b.files);
+    let wait = next();
+    await s.start();
+    await wait;
+    await s.setBreakpoints([line]);
+    wait = next();
+    s.continue();
+    const st = await wait;
+    assert.equal(st.reason, 'breakpoint');
+    // fibonachchi(10) -> ... -> fibonachchi(2): 9 кадров функции и main
+    assert.equal(st.frames.length, 10);
+    const top = Object.fromEntries(st.frames[0].vars.map((v) => [v.name, v.value]));
+    assert.deepEqual(top, {n: 2, levoe: 1, pravoe: 0});
+    assert.equal(st.frames[0].vars.find((v) => v.name === 'levoe').kind, 'local');
+    assert.equal(st.frames.at(-1).func, 'main');
+    assert.ok(!st.variables.some((v) => ['levoe', 'pravoe', 'n'].includes(v.name)), 'локальные не в глобальных');
+    await s.stop();
   });
 
   test('программа завершается на блоке «конец программы»', async () => {

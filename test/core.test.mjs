@@ -241,6 +241,43 @@ describe('язык PVM HLC', () => {
     assert.deepEqual(r.extraEntries, ['S2']);
   });
 
+  test('локальные переменные функции: объявление в начале тела, не в глобальных', () => {
+    const num = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+    const get = (id) => ({block: {type: 'variables_get', fields: {VAR: {id}}}});
+    const ws = load({
+      variables: [{id: 's', name: 'сумма'}, {id: 'g', name: 'g'}, {id: 'k', name: 'k'}],
+      blocks: {
+        blocks: [
+          {
+            type: 'procedures_defreturn',
+            fields: {NAME: 'f'},
+            inputs: {
+              STACK: {
+                block: {
+                  type: 'pvm_local',
+                  fields: {VAR: {id: 's'}},
+                  inputs: {VALUE: num(0)},
+                  next: {block: {type: 'controls_repeat_ext', inputs: {TIMES: num(3), DO: {block: {type: 'math_change', fields: {VAR: {id: 's'}}, inputs: {DELTA: num(2)}}}}, next: {block: {type: 'pvm_local', fields: {VAR: {id: 'k'}}}}}},
+                },
+              },
+              RETURN: get('s'),
+            },
+          },
+          {type: 'pvm_start', y: 300, next: {block: {type: 'variables_set', fields: {VAR: {id: 'g'}}, inputs: {VALUE: {block: {type: 'procedures_callreturn', extraState: {name: 'f', params: []}}}}, next: {block: {type: 'pvm_local', id: 'MIS', fields: {VAR: {id: 'k'}}, inputs: {VALUE: num(1)}}}}}},
+        ],
+      },
+    });
+    const r = generateCode(pvm, ws);
+    // Тело функции начинается с объявлений: summa, k и счётчик цикла — все локальные.
+    assert.match(r.code, /int f\(\) \{\n {4}int summa;\n {4}int k;\n {4}int count;\n {4}summa = 0;/);
+    assert.doesNotMatch(r.code, /^int summa;/m, '«сумма» используется только в f — глобальной не нужна');
+    assert.match(r.code, /^int g;/m);
+    assert.match(r.code, /^int k;/m, 'k используется и в main — остаётся глобальной');
+    assert.doesNotMatch(r.code, /^int count;/m);
+    assert.deepEqual(r.misplacedLocals, ['MIS']);
+    assert.match(r.code, /void main\(\) \{\n {4}g = f\(\);\n {4}k = 1;/);
+  });
+
   test('блок «конец программы» — halt; в конце main', () => {
     const ws = load({
       variables: [{id: 'x', name: 'x'}],

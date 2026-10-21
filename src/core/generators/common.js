@@ -35,6 +35,7 @@ export function generateWithReport(gen, workspace) {
     warnings.push(`Стопок вне «начала программы»: ${gen.lastDetached.length} — они не выполняются`);
   }
   if (gen.lastExtraEntries?.length) warnings.push('Блок «начало программы» должен быть один — выполняется верхний');
+  if (gen.lastMisplacedLocals?.length) warnings.push('Локальные переменные объявляются только внутри функций');
   return {
     code,
     warnings,
@@ -43,5 +44,6 @@ export function generateWithReport(gen, workspace) {
     names: gen.lastNames || {},
     detached: gen.lastDetached || [], // стопки вне блока начала программы — не выполняются
     extraEntries: gen.lastExtraEntries || [], // лишние блоки начала программы
+    misplacedLocals: gen.lastMisplacedLocals || [], // блоки локальных переменных вне функций
   };
 }

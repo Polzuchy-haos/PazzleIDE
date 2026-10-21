@@ -39,6 +39,14 @@ export function extractBlockMarkers(text) {
   return {code: out.join('\n') + '\n', lineBlocks};
 }
 
+/** Определение функции, внутри которого стоит блок (или null). */
+function procedureOf(block) {
+  for (let b = block; b; b = b.getParent()) {
+    if (b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn') return b;
+  }
+  return null;
+}
+
 /** Есть ли в коде стопки что-то кроме маркеров, пустых строк и комментариев. */
 function isExecutable(code, commentPrefix) {
   const comment = commentPrefix.trim();
@@ -95,7 +103,8 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     this.helperOrder_ = new Map(); // ключ -> порядок в {{HELPERS}} (меньше — выше)
     this.functions_ = [];
     this.prototypes_ = [];
-    this.temps_ = new Map(); // `${block.id}:${base}` -> {name, type}
+    this.temps_ = new Map(); // `${block.id}:${base}` -> {name, type, proc}
+    this.analyzeLocals(workspace);
     this.isInitialized = true;
   }
 
@@ -106,9 +115,10 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
       const declare = (name, type) =>
         decls.push(this.renderText(p.variables.declaration, null, {vars: {NAME: name, TYPE: this.typeName(type), DEFAULT: this.defaultFor(type)}}));
       for (const v of Blockly.Variables.allUsedVarModels(this.workspace_)) {
+        if (this.localOnly_.has(v.getId())) continue;
         declare(this.getVariableName(v.getId()), this.types.varType(v.getId()));
       }
-      if (p.variables.declareTemps !== false) for (const t of this.temps_.values()) declare(t.name, t.type);
+      if (p.variables.declareTemps !== false) for (const t of this.temps_.values()) if (!t.proc) declare(t.name, t.type);
     }
     const sep = (s, d) => (s === undefined ? d : s);
     const vars = {
@@ -410,9 +420,47 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     const key = `${block.id}:${base}`;
     if (!this.temps_.has(key)) {
       const name = this.nameDB_.getDistinctName(base, Blockly.Names.NameType.VARIABLE);
-      this.temps_.set(key, {name, type: this.pack.types?.Integer ? 'Integer' : NUM});
+      // Внутри функции служебная переменная (счётчик цикла) — локальная: иначе рекурсия её портит.
+      const proc = this.pack.functions?.local ? procedureOf(block) : null;
+      this.temps_.set(key, {name, type: this.pack.types?.Integer ? 'Integer' : NUM, proc: proc?.id || null});
     }
     return this.temps_.get(key).name;
+  }
+
+  /**
+   * Локальные переменные (блок pack.localBlock внутри функции): какие переменные в
+   * каких функциях локальные, какие нигде больше не используются (глобальными их
+   * не объявляем) и какие блоки локальных стоят вне функций.
+   */
+  analyzeLocals(workspace) {
+    this.procLocals_ = new Map(); // id блока функции -> Set(id переменных)
+    this.localOnly_ = new Set();
+    this.lastMisplacedLocals = [];
+    const localType = this.pack.localBlock;
+    if (!localType || !this.pack.functions?.local) return;
+    for (const b of workspace.getBlocksByType(localType, false)) {
+      if (!b.isEnabled()) continue;
+      const proc = procedureOf(b);
+      if (!proc) {
+        this.lastMisplacedLocals.push(b.id);
+        continue;
+      }
+      if (!this.procLocals_.has(proc.id)) this.procLocals_.set(proc.id, new Set());
+      this.procLocals_.get(proc.id).add(b.getFieldValue('VAR'));
+    }
+    // Переменная только локальная, если каждое её использование — в функции, где она
+    // локальная или параметр (вызовы функций ссылаются на параметры — их не считаем).
+    for (const v of Blockly.Variables.allUsedVarModels(workspace)) {
+      const id = v.getId();
+      const uses = Blockly.Variables.getVariableUsesById(workspace, id).filter((u) => !/^procedures_call/.test(u.type));
+      const localEverywhere = uses.length > 0 && uses.every((u) => {
+        const proc = procedureOf(u);
+        if (!proc) return false;
+        const params = proc.getVarModels().map((m) => m.getId());
+        return params.includes(id) || this.procLocals_.get(proc.id)?.has(id);
+      });
+      if (localEverywhere) this.localOnly_.add(id);
+    }
   }
 
   renderProcedure(block) {
@@ -424,13 +472,26 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
       this.renderText(F.param ?? '{{NAME}}', null, {vars: {NAME: this.getVariableName(v.getId()), TYPE: this.typeName(this.types.varType(v.getId()))}}),
     );
     const joined = params.join(F.paramSeparator ?? ', ');
+    const body = this.statementToCode(block, 'STACK'); // до LOCALS: тело регистрирует счётчики циклов
+    const ret = withReturn ? this.valueToCode(block, 'RETURN', NONE) || this.defaultFor(retType) : '';
+    const paramIds = new Set(block.getVarModels().map((v) => v.getId()));
+    const localDecls = [];
+    if (F.local) {
+      const declareLocal = (name, type) =>
+        localDecls.push(this.INDENT + this.renderText(F.local, null, {vars: {NAME: name, TYPE: this.typeName(type), DEFAULT: this.defaultFor(type)}}));
+      for (const id of this.procLocals_.get(block.id) || []) {
+        if (!paramIds.has(id)) declareLocal(this.getVariableName(id), this.types.varType(id));
+      }
+      for (const t of this.temps_.values()) if (t.proc === block.id) declareLocal(t.name, t.type);
+    }
     const vars = {
       NAME: this.getProcedureName(rawName),
       PARAMS: joined,
       // «(a, b)» или пусто, если параметров нет (для языков, где пустые скобки не пишут).
       PARAMS_WRAPPED: params.length ? this.renderText(F.paramsWrap ?? '({{PARAMS}})', null, {vars: {PARAMS: joined}}) : '',
-      BODY: this.statementToCode(block, 'STACK'),
-      RETURN: withReturn ? this.valueToCode(block, 'RETURN', NONE) || this.defaultFor(retType) : '',
+      LOCALS: localDecls.length ? localDecls.join('\n') + '\n' : '',
+      BODY: body,
+      RETURN: ret,
       RETURN_TYPE: withReturn ? this.typeName(retType) : this.pack.types?.Void ?? 'void',
     };
     const tpl = withReturn ? F.withReturn : F.noReturn;

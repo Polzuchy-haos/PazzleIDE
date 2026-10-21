@@ -5,6 +5,7 @@
   "fileExtension": "hlc",
   "fileName": "main.hlc",
   "entryBlock": "pvm_start",
+  "localBlock": "pvm_local",
   "editorLanguage": "c",
   "indent": "    ",
   "lineComment": "//",
@@ -67,13 +68,14 @@
     "paramSeparator": ", ",
     "noReturn": [
       "void {{NAME}}({{PARAMS}}) {",
-      "{{BODY}}}"
+      "{{LOCALS}}{{BODY}}}"
     ],
     "withReturn": [
       "int {{NAME}}({{PARAMS}}) {",
-      "{{BODY}}    return {{RETURN}};",
+      "{{LOCALS}}{{BODY}}    return {{RETURN}};",
       "}"
-    ]
+    ],
+    "local": "int {{NAME}};"
   },
   "program": [
     "// Сгенерировано PazzleIDE (PVM HLC)",
@@ -457,7 +459,14 @@
     },
     "pvm_const_get": "{{NAME|constname}}",
     "pvm_start": "",
-    "pvm_end": "halt;"
+    "pvm_end": "halt;",
+    "pvm_local": {
+      "switch": "$CONNECTED:VALUE",
+      "cases": {
+        "true": "{{VAR}} = {{VALUE}};",
+        "false": ""
+      }
+    }
   },
   "customBlocks": [
     {
@@ -732,6 +741,27 @@
       "output": "Number",
       "colour": "#CF63CF",
       "tooltip": "Значение константы"
+    },
+    {
+      "type": "pvm_local",
+      "message0": "локальная переменная %1 = %2",
+      "args0": [
+        {
+          "type": "field_variable",
+          "name": "VAR",
+          "variable": "лок"
+        },
+        {
+          "type": "input_value",
+          "name": "VALUE",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#DB6E00",
+      "tooltip": "Делает переменную локальной для этой функции: у каждого вызова (и в рекурсии) — своя копия. Ставится внутри функции; значение необязательно. Дальше переменная используется обычными блоками «присвоить» и значения."
     }
   ],
   "toolbox": [
