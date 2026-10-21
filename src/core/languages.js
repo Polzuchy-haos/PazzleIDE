@@ -1,4 +1,4 @@
-// Язык VisualIDE — PVM HLC. Он описан декларативно в languages/pvm.json и
+// Язык PazzleIDE — PVM HLC. Он описан декларативно в languages/pvm.json и
 // генерируется шаблонным генератором (src/core/generators/template.js).
 import {installTransliteration} from './translit.js';
 import {installCustomBlocks, defineBlocks} from './blocks.js';

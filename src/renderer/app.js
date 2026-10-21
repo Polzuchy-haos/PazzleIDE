@@ -1,4 +1,4 @@
-// Интерфейс VisualIDE для PVM: блоки, код HLC, сборка, запуск и отладка (симулятор или плата).
+// Интерфейс PazzleIDE для PVM: блоки, код HLC, сборка, запуск и отладка (симулятор или плата).
 import * as Blockly from 'blockly';
 import * as Ru from 'blockly/msg/ru';
 import {monaco} from './monaco-setup.js';
@@ -15,9 +15,9 @@ Blockly.Msg['PROCEDURES_DEFNORETURN_COMMENT'] = '';
 Blockly.Msg['PROCEDURES_DEFRETURN_COMMENT'] = '';
 self.MonacoEnvironment = {getWorker: () => new Worker('editor.worker.js')};
 
-const vide = window.vide;
+const pazzle = window.pazzle;
 const $ = (id) => document.getElementById(id);
-const AUTOSAVE_KEY = 'vide.pvm.autosave';
+const AUTOSAVE_KEY = 'pazzle.pvm.autosave';
 const TARGET_NAMES = {
   sim: 'симулятор',
   'board-host': 'плата (программа с хоста)',
@@ -46,7 +46,7 @@ const state = {
 
 const consoleView = new ConsoleView($('console-output'));
 const debugView = new DebugView();
-window.videDebug = {state, Blockly, monaco}; // доступ из DevTools
+window.pazzleDebug = {state, Blockly, monaco}; // доступ из DevTools
 
 // ---------------------------------------------------------------- утилиты
 
@@ -65,13 +65,13 @@ function setStatus(text, isError = false) {
 
 function updateTitle() {
   const name = state.filePath ? state.filePath.split(/[\\/]/).pop() : 'Без имени';
-  document.title = `${name}${state.dirty ? ' •' : ''} — VisualIDE PVM`;
+  document.title = `${name}${state.dirty ? ' •' : ''} — PazzleIDE PVM`;
 }
 
 function setDirty(value) {
   if (state.dirty === value) return;
   state.dirty = value;
-  vide.setDirty(value);
+  pazzle.setDirty(value);
   updateTitle();
 }
 
@@ -158,7 +158,7 @@ function applyBlockWarnings() {
 
 function refreshBreakpointVisuals() {
   for (const block of state.ws.getAllBlocks(false)) {
-    block.getSvgRoot()?.classList.toggle('vide-bp', state.breakpoints.has(block.id));
+    block.getSvgRoot()?.classList.toggle('pz-bp', state.breakpoints.has(block.id));
   }
   refreshEditorDecorations();
 }
@@ -173,7 +173,7 @@ function toggleBreakpoint(block) {
   else state.breakpoints.add(block.id);
   refreshBreakpointVisuals();
   scheduleAutosave();
-  if (state.debug.active) vide.debug.command('breakpoints', breakpointLines(state.debug.build));
+  if (state.debug.active) pazzle.debug.command('breakpoints', breakpointLines(state.debug.build));
 }
 
 function breakpointLines(build) {
@@ -182,7 +182,7 @@ function breakpointLines(build) {
 }
 
 function registerContextMenu() {
-  const id = 'vide_toggle_breakpoint';
+  const id = 'pazzle_toggle_breakpoint';
   if (Blockly.ContextMenuRegistry.registry.getItem(id)) return;
   Blockly.ContextMenuRegistry.registry.register({
     id,
@@ -204,11 +204,11 @@ function refreshEditorDecorations() {
   const items = [];
   for (const id of state.breakpoints) {
     const line = lineForBlock(lineBlocks, id);
-    if (line) items.push({range: new monaco.Range(line, 1, line, 1), options: {glyphMarginClassName: 'vide-bp-glyph', glyphMarginHoverMessage: {value: 'Точка останова'}}});
+    if (line) items.push({range: new monaco.Range(line, 1, line, 1), options: {glyphMarginClassName: 'pz-bp-glyph', glyphMarginHoverMessage: {value: 'Точка останова'}}});
   }
   const snap = state.debug.snapshot;
   if (state.debug.active && snap?.line && !state.debug.running) {
-    items.push({range: new monaco.Range(snap.line, 1, snap.line, 1), options: {isWholeLine: true, className: 'vide-current-line', glyphMarginClassName: 'vide-current-glyph'}});
+    items.push({range: new monaco.Range(snap.line, 1, snap.line, 1), options: {isWholeLine: true, className: 'pz-current-line', glyphMarginClassName: 'pz-current-glyph'}});
   }
   if (!decorations) decorations = state.editor.createDecorationsCollection(items);
   else decorations.set(state.view === 'hlc' ? items : []);
@@ -358,7 +358,7 @@ function confirmDiscard() {
 }
 
 async function saveProject(saveAs = false) {
-  const saved = await vide.project.save(saveAs ? null : state.filePath, serialize());
+  const saved = await pazzle.project.save(saveAs ? null : state.filePath, serialize());
   if (!saved) return false;
   state.filePath = saved;
   setDirty(false);
@@ -399,7 +399,7 @@ async function build({silent = false} = {}) {
   showBottom('console-panel');
   consoleView.line('— Сборка —', 'info');
   setStatus('Сборка…');
-  const r = await vide.pvm.build({code, projectPath: state.filePath});
+  const r = await pazzle.pvm.build({code, projectPath: state.filePath});
   state.busy = false;
 
   state.buildErrors.clear();
@@ -480,7 +480,7 @@ async function run() {
   showBottom('console-panel');
   consoleView.line(`— Запуск: ${TARGET_NAMES[target()]} —`, 'info');
   setRunning(true);
-  const r = await vide.pvm.run({
+  const r = await pazzle.pvm.run({
     files: b.files,
     target: target(),
     port: $('port').value,
@@ -526,7 +526,7 @@ function onRunEvent(ev) {
 
 async function startDebug() {
   if (state.debug.active) {
-    if (!state.debug.running) vide.debug.command('continue');
+    if (!state.debug.running) pazzle.debug.command('continue');
     return;
   }
   if (state.running) return;
@@ -542,7 +542,7 @@ async function startDebug() {
   showBottom('debug-panel');
   consoleView.line(`— Отладка: ${TARGET_NAMES[target()]} —`, 'info');
   setStatus(`Подключение: ${TARGET_NAMES[target()]}…`);
-  const r = await vide.debug.start({
+  const r = await pazzle.debug.start({
     files: b.files,
     target: target(),
     port: $('port').value,
@@ -558,14 +558,14 @@ async function startDebug() {
 
 function highlightCurrent(snap) {
   const prev = state.debug.currentBlock;
-  if (prev) state.ws.getBlockById(prev)?.getSvgRoot()?.classList.remove('vide-current');
+  if (prev) state.ws.getBlockById(prev)?.getSvgRoot()?.classList.remove('pz-current');
   state.debug.currentBlock = null;
   if (!snap?.line) return;
   const id = blockForLine(state.debug.build.lineBlocks, snap.line);
   const block = id && state.ws.getBlockById(id);
   if (!block) return;
   state.debug.currentBlock = id;
-  block.getSvgRoot()?.classList.add('vide-current');
+  block.getSvgRoot()?.classList.add('pz-current');
   // Блок вне видимой области — центрируем его.
   const metrics = state.ws.getMetricsManager().getViewMetrics(true);
   const r = block.getBoundingRectangle();
@@ -624,18 +624,18 @@ function endDebug() {
 function debugCommand(name) {
   if (!state.debug.active) return;
   if (name !== 'pause' && state.debug.running) return;
-  vide.debug.command(name);
+  pazzle.debug.command(name);
 }
 
 async function stop() {
-  if (state.debug.active) await vide.debug.command('stop');
-  else if (state.running) await vide.pvm.stop();
+  if (state.debug.active) await pazzle.debug.command('stop');
+  else if (state.running) await pazzle.pvm.stop();
 }
 
 // ---------------------------------------------------------------- порты и цель
 
 async function refreshPorts() {
-  const ports = await vide.pvm.ports();
+  const ports = await pazzle.pvm.ports();
   const select = $('port');
   const wanted = state.settings.port || 'COM3';
   select.textContent = '';
@@ -651,7 +651,7 @@ function applyTargetUi() {
 }
 
 async function refreshTools() {
-  state.tools = await vide.pvm.tools();
+  state.tools = await pazzle.pvm.tools();
   const el = $('status-tools');
   el.textContent = state.tools.dir ? `PVM: ${state.tools.dir}` : 'PVM: утилиты не найдены — Настройки';
   el.style.cursor = 'pointer';
@@ -664,7 +664,7 @@ async function refreshTools() {
 // ---------------------------------------------------------------- команды
 
 async function showAbout() {
-  const info = await vide.info();
+  const info = await pazzle.info();
   $('about-text').textContent =
     `Версия ${info.version}. Визуальное программирование стековой виртуальной машины PVM блоками: ` +
     `код PVM HLC, сборка pvmcc/pvmc, выполнение и отладка в симуляторе или на плате. ` +
@@ -706,21 +706,21 @@ const commands = {
   },
   async open() {
     if (!confirmDiscard()) return;
-    const r = await vide.project.open();
+    const r = await pazzle.project.open();
     if (r) openProjectText(r.content, r.path);
   },
   async example(file) {
     if (!confirmDiscard()) return;
-    openProjectText(await vide.project.readExample(file), null);
+    openProjectText(await pazzle.project.readExample(file), null);
   },
   save: () => saveProject(false),
   saveAs: () => saveProject(true),
   async export() {
-    const saved = await vide.exportCode('main.hlc', currentCode());
+    const saved = await pazzle.exportCode('main.hlc', currentCode());
     if (saved) setStatus(`Код сохранён: ${saved}`);
   },
   async exportProject() {
-    const r = await vide.pvm.exportProject({code: currentCode(), port: $('port').value || state.settings.port});
+    const r = await pazzle.pvm.exportProject({code: currentCode(), port: $('port').value || state.settings.port});
     if (!r) return;
     showBottom('console-panel');
     if (r.ok) {
@@ -730,7 +730,7 @@ const commands = {
       consoleView.error(r.error || r.log || 'Не удалось создать проект');
     }
   },
-  openBuildFolder: () => vide.pvm.openBuildFolder(state.filePath),
+  openBuildFolder: () => pazzle.pvm.openBuildFolder(state.filePath),
   build: async () => {
     state.build = null; // явная сборка — всегда заново
     await build();
@@ -759,14 +759,14 @@ const commands = {
   zoomFit: () => state.ws.zoomToFit(),
   async toggleTheme() {
     const theme = state.settings.theme === 'light' ? 'dark' : 'light';
-    applySettings(await vide.settings.set({theme}));
+    applySettings(await pazzle.settings.set({theme}));
   },
   async settings() {
     openSettingsDialog({
       settings: state.settings,
-      tools: await vide.pvm.tools(),
-      chooseFolder: () => vide.settings.chooseFolder(),
-      onSave: async (patch) => applySettings(await vide.settings.set(patch)),
+      tools: await pazzle.pvm.tools(),
+      chooseFolder: () => pazzle.settings.chooseFolder(),
+      onSave: async (patch) => applySettings(await pazzle.settings.set(patch)),
     });
   },
   about: showAbout,
@@ -794,21 +794,21 @@ function wireUi() {
     setStatus('Код скопирован в буфер обмена');
   });
   $('target').addEventListener('change', async () => {
-    state.settings = await vide.settings.set({target: target()});
+    state.settings = await pazzle.settings.set({target: target()});
     applyTargetUi();
   });
   $('port').addEventListener('change', async () => {
-    state.settings = await vide.settings.set({port: $('port').value});
+    state.settings = await pazzle.settings.set({port: $('port').value});
   });
   $('baud').addEventListener('change', async () => {
-    state.settings = await vide.settings.set({baud: Number($('baud').value)});
+    state.settings = await pazzle.settings.set({baud: Number($('baud').value)});
   });
   $('btn-ports').addEventListener('click', () => refreshPorts());
-  vide.onMenu(({id, arg}) => runCommand(id, arg));
-  vide.pvm.onBuildOutput((o) => consoleView.write(o.text, o.stream === 'command' ? 'command' : o.stream === 'stderr' ? 'stderr' : 'stdout'));
-  vide.pvm.onRunEvent(onRunEvent);
-  vide.debug.onEvent(onDebugEvent);
-  vide.onOpenFile(({path, content}) => {
+  pazzle.onMenu(({id, arg}) => runCommand(id, arg));
+  pazzle.pvm.onBuildOutput((o) => consoleView.write(o.text, o.stream === 'command' ? 'command' : o.stream === 'stderr' ? 'stderr' : 'stdout'));
+  pazzle.pvm.onRunEvent(onRunEvent);
+  pazzle.debug.onEvent(onDebugEvent);
+  pazzle.onOpenFile(({path, content}) => {
     if (confirmDiscard()) openProjectText(content, path);
   });
   initSplitters(() => Blockly.svgResize(state.ws));
@@ -818,9 +818,9 @@ function wireUi() {
 // ---------------------------------------------------------------- старт
 
 async function main() {
-  state.settings = await vide.settings.get();
+  state.settings = await pazzle.settings.get();
   applyPageTheme(state.settings.theme);
-  state.language = createLanguage(await vide.loadLanguage());
+  state.language = createLanguage(await pazzle.loadLanguage());
   registerPvmsLanguage();
   registerContextMenu();
   injectWorkspace();
@@ -842,11 +842,11 @@ async function main() {
     restored = false;
   }
   if (!restored) {
-    const examples = await vide.project.examples();
-    if (examples[0]) openProjectText(await vide.project.readExample(examples[0].file), null);
+    const examples = await pazzle.project.examples();
+    if (examples[0]) openProjectText(await pazzle.project.readExample(examples[0].file), null);
   }
   regenerate();
-  Object.assign(window.videDebug, {commands, toggleBreakpoint});
+  Object.assign(window.pazzleDebug, {commands, toggleBreakpoint});
   if (state.tools?.dir) setStatus('Готово. Ctrl+B — собрать, Ctrl+F5 — запустить, F5 — отладка.');
 }
 

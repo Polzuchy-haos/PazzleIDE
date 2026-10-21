@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data:; worker-src 'self' blob:; connect-src 'self'">
-  <title>VisualIDE</title>
+  <title>PazzleIDE</title>
   <link rel="stylesheet" href="app.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="toolbar">
-    <div class="brand" title="VisualIDE для PVM">
+    <div class="brand" title="PazzleIDE для PVM">
       <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
         <rect x="2" y="4" width="16" height="10" rx="3" fill="#FFAB19"/>
         <rect x="8" y="16" width="16" height="10" rx="3" fill="#4C97FF"/>
         <path d="M21 9l4 4-4 4M27 15h-6" stroke="#59C059" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span>VisualIDE <small>PVM</small></span>
+      <span>PazzleIDE <small>PVM</small></span>
     </div>
 
     <div class="group">
@@ -208,7 +208,7 @@
       <h3>Утилиты PVM</h3>
       <p class="hint">Папка, где лежат <code>pvmcc</code>, <code>pvmc</code>, <code>pvmsim</code>, <code>pvmdbg</code>
         (обычно <code>Release</code> проекта PVM). Пусто — искать автоматически: переменная <code>PVM_HOME</code>,
-        папка <code>../pvm/Release</code> рядом с VisualIDE, <code>PATH</code>.</p>
+        папка <code>../pvm/Release</code> рядом с PazzleIDE, <code>PATH</code>.</p>
       <div class="field-line">
         <input name="pvmTools" placeholder="автоматически" spellcheck="false">
         <button type="button" id="settings-browse">Обзор…</button>
@@ -238,7 +238,7 @@
 
   <dialog id="about-dialog">
     <form method="dialog">
-      <h2>VisualIDE для PVM</h2>
+      <h2>PazzleIDE для PVM</h2>
       <p id="about-text"></p>
       <p class="hint">Блоки — Blockly (Apache 2.0), редактор кода — Monaco (MIT), оболочка — Electron (MIT).
         Компилятор, симулятор и отладчик — утилиты проекта PVM.</p>

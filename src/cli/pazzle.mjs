@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Командная строка VisualIDE: код HLC, сборка и запуск проектов .vide без интерфейса.
+// Командная строка PazzleIDE: код HLC, сборка и запуск проектов .pzl без интерфейса.
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -10,11 +10,11 @@ import {createLanguage, generateCode, parseProject} from '../core/index.js';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-const USAGE = `VisualIDE CLI (PVM)
+const USAGE = `PazzleIDE CLI (PVM)
 
-  vide hlc   <проект.vide> [-o файл.hlc]           код PVM HLC из блоков (по умолчанию — в stdout)
-  vide build <проект.vide> [-o папка]              собрать: hlc, pvms, bin, hex, C-массив, листинг, карта отладки
-  vide run   <проект.vide> [--port COM3] [--baud 9600]
+  pazzle hlc   <проект.pzl> [-o файл.hlc]           код PVM HLC из блоков (по умолчанию — в stdout)
+  pazzle build <проект.pzl> [-o папка]              собрать: hlc, pvms, bin, hex, C-массив, листинг, карта отладки
+  pazzle run   <проект.pzl> [--port COM3] [--baud 9600]
                                                   собрать и выполнить: в симуляторе, а с --port — на плате
                                                   (программа с хоста, pvmdbg --host)
 
@@ -47,7 +47,7 @@ async function main() {
   const [command, file] = args._;
   if (args.help || !command) return process.stdout.write(USAGE);
   if (!['hlc', 'build', 'run'].includes(command)) fail(USAGE);
-  if (!file) fail('Укажите файл проекта .vide');
+  if (!file) fail('Укажите файл проекта .pzl');
 
   const pack = JSON.parse(fs.readFileSync(path.join(root, 'languages', 'pvm.json'), 'utf8'));
   const language = createLanguage(pack);

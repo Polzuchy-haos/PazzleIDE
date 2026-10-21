@@ -22,7 +22,7 @@ let settings;
 let mainWindow = null;
 let dirty = false;
 let activity = null; // текущий запуск или сессия отладки: {kind, stop()}
-let pendingOpenFile = process.argv.slice(1).find((a) => a.endsWith('.vide') && fs.existsSync(a)) || null;
+let pendingOpenFile = process.argv.slice(1).find((a) => /\.(pzl|vide)$/i.test(a) && fs.existsSync(a)) || null;
 
 protocol.registerSchemesAsPrivileged([
   {scheme: 'app', privileges: {standard: true, secure: true, supportFetchAPI: true}},
@@ -49,10 +49,10 @@ function listExamples() {
   try {
     return fs
       .readdirSync(EXAMPLES_DIR)
-      .filter((f) => f.endsWith('.vide'))
+      .filter((f) => f.endsWith('.pzl'))
       .sort()
       .map((f) => {
-        let title = f.replace(/^\d+-/, '').replace(/\.vide$/, '');
+        let title = f.replace(/^\d+-/, '').replace(/\.pzl$/, '');
         try {
           title = JSON.parse(fs.readFileSync(path.join(EXAMPLES_DIR, f), 'utf8')).title || title;
         } catch {
@@ -252,7 +252,7 @@ function registerIpc() {
   ipcMain.handle('project:open', async () => {
     const r = await dialog.showOpenDialog(mainWindow, {
       title: 'Открыть проект',
-      filters: [{name: 'Проект VisualIDE', extensions: ['vide']}, {name: 'Все файлы', extensions: ['*']}],
+      filters: [{name: 'Проект PazzleIDE', extensions: ['pzl', 'vide']}, {name: 'Все файлы', extensions: ['*']}],
       properties: ['openFile'],
     });
     if (r.canceled || !r.filePaths[0]) return null;
@@ -264,8 +264,8 @@ function registerIpc() {
     if (!target) {
       const r = await dialog.showSaveDialog(mainWindow, {
         title: 'Сохранить проект',
-        defaultPath: 'проект.vide',
-        filters: [{name: 'Проект VisualIDE', extensions: ['vide']}],
+        defaultPath: 'проект.pzl',
+        filters: [{name: 'Проект PazzleIDE', extensions: ['pzl']}],
       });
       if (r.canceled || !r.filePath) return null;
       target = r.filePath;
@@ -404,7 +404,7 @@ function createWindow() {
     height: w.height,
     minWidth: 980,
     minHeight: 620,
-    title: 'VisualIDE',
+    title: 'PazzleIDE',
     backgroundColor: settings.get().theme === 'light' ? '#f5f6f8' : '#1e1f22',
     icon: path.join(ROOT, 'build', 'icon.png'),
     show: false,
@@ -440,7 +440,7 @@ function createWindow() {
         buttons: ['Выйти без сохранения', 'Отмена'],
         defaultId: 1,
         cancelId: 1,
-        title: 'VisualIDE',
+        title: 'PazzleIDE',
         message: 'В проекте есть несохранённые изменения. Выйти?',
       });
       if (choice === 1) {
@@ -457,31 +457,31 @@ function createWindow() {
     mainWindow = null;
   });
 
-  if (process.env.VIDE_DEBUG) {
+  if (process.env.PAZZLE_DEBUG) {
     // Сообщения консоли интерфейса — в терминал (отладка, автотесты).
     mainWindow.webContents.on('console-message', (e) => console.log(`[renderer:${e.level}] ${e.message}`));
   }
-  if (process.env.VIDE_SCREENSHOT) {
-    // Снимок окна для проверки интерфейса: VIDE_SCREENSHOT=путь.png, VIDE_EVAL — код до снимка.
+  if (process.env.PAZZLE_SCREENSHOT) {
+    // Снимок окна для проверки интерфейса: PAZZLE_SCREENSHOT=путь.png, PAZZLE_EVAL — код до снимка.
     mainWindow.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
-        if (process.env.VIDE_EVAL) await mainWindow.webContents.executeJavaScript(process.env.VIDE_EVAL).catch((e) => console.log(e));
-        await new Promise((r) => setTimeout(r, Number(process.env.VIDE_EVAL_DELAY || 300)));
+        if (process.env.PAZZLE_EVAL) await mainWindow.webContents.executeJavaScript(process.env.PAZZLE_EVAL).catch((e) => console.log(e));
+        await new Promise((r) => setTimeout(r, Number(process.env.PAZZLE_EVAL_DELAY || 300)));
         const image = await mainWindow.webContents.capturePage();
-        fs.writeFileSync(process.env.VIDE_SCREENSHOT, image.toPNG());
+        fs.writeFileSync(process.env.PAZZLE_SCREENSHOT, image.toPNG());
         dirty = false;
         await stopActivity();
         app.exit(0);
-      }, Number(process.env.VIDE_SCREENSHOT_DELAY || 3000));
+      }, Number(process.env.PAZZLE_SCREENSHOT_DELAY || 3000));
     });
   }
 
   mainWindow.loadURL('app://ide/index.html');
 }
 
-if (process.env.VIDE_USER_DATA) app.setPath('userData', process.env.VIDE_USER_DATA);
+if (process.env.PAZZLE_USER_DATA) app.setPath('userData', process.env.PAZZLE_USER_DATA);
 
-// macOS: двойной щелчок по файлу .vide.
+// macOS: двойной щелчок по файлу .pzl.
 app.on('open-file', (e, filePath) => {
   e.preventDefault();
   if (mainWindow) send('open-file', {path: filePath, content: fs.readFileSync(filePath, 'utf8')});

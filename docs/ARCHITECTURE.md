@@ -1,4 +1,4 @@
-# Архитектура VisualIDE для PVM
+# Архитектура PazzleIDE для PVM
 
 ## Общая схема
 
@@ -23,7 +23,7 @@ flowchart LR
 ```
 
 Приложение построено на **Electron** (Windows, macOS, Linux). Интерфейс изолирован от системы
-(`contextIsolation`, `sandbox`), а к файлам и процессам обращается только через API `window.vide` из
+(`contextIsolation`, `sandbox`), а к файлам и процессам обращается только через API `window.pazzle` из
 [`preload.cjs`](../src/main/preload.cjs).
 
 ## Структура
@@ -36,11 +36,11 @@ src/
     generators/common.js   неподдерживаемые блоки, отчёт генерации
     toolbox.js             палитра (только то, что есть в HLC)
     types.js, translit.js  вывод типов, транслитерация имён
-    project.js             формат файла .vide (блоки + точки останова)
+    project.js             формат файла .pzl (блоки + точки останова)
     blocks.js              блоки «комментарий», «код», «выражение»
   main/
     main.cjs               окно, меню, IPC
-    preload.cjs            мост window.vide
+    preload.cjs            мост window.pazzle
     pvm/tools.cjs          поиск утилит PVM
     pvm/build.cjs          сборка и разбор ошибок pvmcc
     pvm/artifacts.cjs      карта отладки (.dbgmap) и листинг (.lst)
@@ -48,7 +48,7 @@ src/
     pvm/serial.cjs         список последовательных портов
     runner.cjs             построчный фильтр вывода pvmsim
   renderer/                интерфейс: app.js, debug-view.js, settings-dialog.js, …
-  cli/vide.mjs             hlc / build / run без интерфейса
+  cli/pazzle.mjs             hlc / build / run без интерфейса
 languages/pvm.json         описание PVM HLC: шаблоны, помощники, блоки категории «PVM»
 examples/                  примеры (они же эталоны тестов)
 ```
@@ -56,7 +56,7 @@ examples/                  примеры (они же эталоны тесто
 ## Ключевые решения
 
 **Протокол с устройством не переписывается.** Кадры, CRC, COM-порт и пересинхронизация потока
-остаются в `pvmdbg`, которая проверена на железе. VisualIDE общается с ней текстом:
+остаются в `pvmdbg`, которая проверена на железе. PazzleIDE общается с ней текстом:
 
 - `MachineDriver` использует машинный протокол `pvmdbg --machine` (`ok …` / `error …`, `run` + `poll`).
   Через него работают симулятор и плата с прошитой программой. Строки, которые не являются ответом

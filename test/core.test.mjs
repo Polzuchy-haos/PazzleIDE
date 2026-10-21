@@ -14,6 +14,7 @@ import {
   toIdentifier,
   validatePack,
   extractBlockMarkers,
+  parseProject,
 } from '../src/core/index.js';
 
 const require = createRequire(import.meta.url);
@@ -129,7 +130,7 @@ describe('шаблонный движок', () => {
   });
 
   test('маркеры блоков вырезаются, пустые строки схлопываются', () => {
-    const r = extractBlockMarkers("a\n@@VIDE_BLOCK@@'X'\n  b\n\n\n\nc  \n");
+    const r = extractBlockMarkers("a\n@@PAZZLE_BLOCK@@'X'\n  b\n\n\n\nc  \n");
     assert.equal(r.code, 'a\n  b\n\nc\n');
     assert.deepEqual(r.lineBlocks, {2: 'X'});
   });
@@ -171,6 +172,18 @@ describe('язык PVM HLC', () => {
     assert.match(code, /section ram 32;/);
     assert.match(code, /volatile int LED @ 0x4000;/);
     assert.match(code, /LED = svc\(2, 3, 4\);/);
+  });
+
+  test('проект, сохранённый до переименования (VisualIDE), открывается', () => {
+    const legacy = {
+      format: 'visualide-project',
+      version: 1,
+      workspace: {blocks: {blocks: [{type: 'vide_comment', fields: {TEXT: 'x'}, next: {block: {type: 'vide_raw_code', fields: {CODE: 'halt;'}}}}]}},
+    };
+    const project = parseProject(JSON.stringify(legacy));
+    assert.equal(project.format, 'pazzleide-project');
+    const {code} = generateCode(pvm, load(project.workspace));
+    assert.match(code, /\/\/ x\n\s*halt;/);
   });
 
   test('имена: HLC -> блоки', () => {

@@ -56,9 +56,9 @@ export const BASE_CATEGORIES = [
     name: 'Код',
     categorystyle: 'code_category',
     contents: [
-      {kind: 'block', type: 'vide_comment'},
-      {kind: 'block', type: 'vide_raw_code'},
-      {kind: 'block', type: 'vide_raw_expr'},
+      {kind: 'block', type: 'pazzle_comment'},
+      {kind: 'block', type: 'pazzle_raw_code'},
+      {kind: 'block', type: 'pazzle_raw_expr'},
     ],
   },
 ];

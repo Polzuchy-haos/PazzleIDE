@@ -95,7 +95,7 @@ class RunSession extends EventEmitter {
 
   async start() {
     const {code, fileName, steps} = this.opts;
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'visualide-'));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pazzleide-'));
     this.dir = dir;
     const file = path.join(dir, fileName);
     const name = path.parse(fileName).name;

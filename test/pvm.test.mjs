@@ -1,7 +1,7 @@
 // Сквозные тесты с настоящими утилитами PVM: сборка примеров и отладка в симуляторе.
 // Утилиты ищутся как в IDE (PVM_HOME, ../pvm/Release, PATH); если их нет — тесты пропускаются.
 // Плата: PVM_BOARD_PORT=COM3 [PVM_BOARD_BAUD=9600] — тогда пример выполняется и на ней.
-import {test, describe} from 'node:test';
+import {test, describe, after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -28,15 +28,22 @@ function generate(example) {
 
 async function build(example) {
   const g = generate(example);
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vide-pvm-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pz-pvm-'));
   const r = await buildProgram({code: g.code, buildDir: dir, tools});
   assert.equal(r.ok, true, `${example}: ${r.log}\n${g.code}`);
   return {...g, build: r};
 }
 
-/** Запускает сессию, ждёт остановок по очереди; actions — что делать на каждой остановке. */
+// Сессии закрываются и при упавшей проверке — иначе pvmdbg держит процесс тестов.
+const opened = [];
+after(async () => {
+  for (const s of opened) await s.stop();
+});
+
+/** Запускает сессию; next() — промис следующей остановки. */
 function session(files, options = {}) {
   const s = new DebugSession({pvmdbg: tools.found.pvmdbg, files, target: 'sim', ...options});
+  opened.push(s);
   const stops = [];
   const output = [];
   let waiter = null;
@@ -54,10 +61,10 @@ function session(files, options = {}) {
 const vars = (st) => Object.fromEntries(st.variables.map((v) => [v.name, v.words > 1 ? v.values : v.values?.[0]]));
 
 const EXPECTED = {
-  '01-migalka.vide': {pereklyucheniy: 6, LED: 0},
-  '02-faktorial.vide': {rezultat: 5040},
-  '03-prostye-chisla.vide': {skolko: 15, poslednee: 47},
-  '04-begushchiy-ogon.vide': {bit: 256, LED: 0},
+  '01-migalka.pzl': {pereklyucheniy: 6, LED: 0},
+  '02-faktorial.pzl': {rezultat: 5040},
+  '03-prostye-chisla.pzl': {skolko: 15, poslednee: 47},
+  '04-begushchiy-ogon.pzl': {bit: 256, LED: 0},
 };
 
 describe('PVM: сборка и выполнение примеров в симуляторе', {skip, timeout: 120_000}, () => {
@@ -82,7 +89,7 @@ describe('PVM: сборка и выполнение примеров в симу
 
 describe('PVM: отладка', {skip, timeout: 120_000}, () => {
   test('точка останова на блоке, шаги, вывод программы', async () => {
-    const {build: b, lineBlocks, ws} = await build('02-faktorial.vide');
+    const {build: b, lineBlocks, ws} = await build('02-faktorial.pzl');
     const ifReturn = ws.getAllBlocks(false).find((x) => x.type === 'procedures_ifreturn');
     const line = Number(Object.entries(lineBlocks).find(([, id]) => id === ifReturn.id)[0]);
     const {s, next, output} = session(b.files);
@@ -119,7 +126,7 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
   });
 
   test('шаг с обходом не заходит в функцию', async () => {
-    const {build: b, code} = await build('02-faktorial.vide');
+    const {build: b, code} = await build('02-faktorial.pzl');
     const callLine = code.split('\n').findIndex((l) => /rezultat = faktorial/.test(l)) + 1;
     const {s, next} = session(b.files);
     let wait = next();
@@ -143,7 +150,7 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
 const port = process.env.PVM_BOARD_PORT;
 describe('PVM: плата (программа с хоста)', {skip: skip || (!port && 'не задан PVM_BOARD_PORT'), timeout: 300_000}, () => {
   test('01-migalka на плате', async () => {
-    const {build: b} = await build('01-migalka.vide');
+    const {build: b} = await build('01-migalka.pzl');
     const {s, next} = session(b.files, {target: 'board-host', port, baud: Number(process.env.PVM_BOARD_BAUD || 9600)});
     let wait = next();
     await s.start();

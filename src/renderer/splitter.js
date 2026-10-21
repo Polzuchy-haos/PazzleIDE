@@ -1,5 +1,5 @@
 // Перетаскиваемые разделители панелей. Размеры запоминаются в localStorage.
-const KEY = 'vide.layout';
+const KEY = 'pazzle.layout';
 
 function load() {
   try {

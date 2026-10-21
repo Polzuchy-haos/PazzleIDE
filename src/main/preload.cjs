@@ -1,4 +1,4 @@
-// Мост между интерфейсом (renderer) и основным процессом. Доступен как window.vide.
+// Мост между интерфейсом (renderer) и основным процессом. Доступен как window.pazzle.
 'use strict';
 const {contextBridge, ipcRenderer} = require('electron');
 
@@ -8,7 +8,7 @@ const on = (channel) => (callback) => {
   return () => ipcRenderer.removeListener(channel, listener);
 };
 
-contextBridge.exposeInMainWorld('vide', {
+contextBridge.exposeInMainWorld('pazzle', {
   info: () => ipcRenderer.invoke('app:info'),
   openDocs: (name) => ipcRenderer.invoke('app:openDocs', name),
   setDirty: (dirty) => ipcRenderer.send('app:setDirty', dirty),

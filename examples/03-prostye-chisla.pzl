@@ -1,5 +1,5 @@
 {
-  "format": "visualide-project",
+  "format": "pazzleide-project",
   "version": 1,
   "language": "pvm",
   "title": "Простые числа до 50",

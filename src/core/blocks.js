@@ -1,9 +1,9 @@
-// Собственные блоки VisualIDE (в дополнение к стандартным блокам Blockly).
+// Собственные блоки PazzleIDE (в дополнение к стандартным блокам Blockly).
 import * as Blockly from 'blockly';
 
 export const CUSTOM_BLOCKS = [
   {
-    type: 'vide_comment',
+    type: 'pazzle_comment',
     message0: '💬 %1',
     args0: [{type: 'field_input', name: 'TEXT', text: 'комментарий'}],
     previousStatement: null,
@@ -12,7 +12,7 @@ export const CUSTOM_BLOCKS = [
     tooltip: 'Комментарий в сгенерированном коде',
   },
   {
-    type: 'vide_raw_code',
+    type: 'pazzle_raw_code',
     message0: 'код %1',
     args0: [{type: 'field_input', name: 'CODE', text: ''}],
     previousStatement: null,
@@ -21,7 +21,7 @@ export const CUSTOM_BLOCKS = [
     tooltip: 'Строка кода, вставляемая без изменений (для выбранного языка)',
   },
   {
-    type: 'vide_raw_expr',
+    type: 'pazzle_raw_expr',
     message0: 'выражение %1',
     args0: [{type: 'field_input', name: 'CODE', text: '0'}],
     output: null,

@@ -1,4 +1,4 @@
-// Генерирует примеры проектов PVM в examples/*.vide (они же — эталоны для тестов).
+// Генерирует примеры проектов PVM в examples/*.pzl (они же — эталоны для тестов).
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -19,7 +19,7 @@ const portGet = (name = 'LED', addr = '0x4000') => val({type: 'pvm_port_get', fi
 const portSet = (value, name = 'LED', addr = '0x4000') => ({type: 'pvm_port_set', fields: {NAME: name, ADDR: addr}, inputs: {VALUE: value}});
 const pause = (ticks) => ({type: 'pvm_delay', inputs: {TICKS: ticks}});
 const section = (kind, size) => ({type: 'pvm_section', fields: {KIND: kind, SIZE: size}});
-const comment = (text) => ({type: 'vide_comment', fields: {TEXT: text}});
+const comment = (text) => ({type: 'pazzle_comment', fields: {TEXT: text}});
 
 function seq(...blocks) {
   const list = blocks.flat().filter(Boolean);
@@ -43,7 +43,7 @@ const call = (name, params, args) =>
 
 function project(title, description, vars, topBlocks) {
   return {
-    format: 'visualide-project',
+    format: 'pazzleide-project',
     version: 1,
     language: 'pvm',
     title,
@@ -132,8 +132,8 @@ examples['04-begushchiy-ogon'] = project(
 
 const dir = path.join(root, 'examples');
 fs.mkdirSync(dir, {recursive: true});
-for (const f of fs.readdirSync(dir)) if (f.endsWith('.vide')) fs.rmSync(path.join(dir, f));
+for (const f of fs.readdirSync(dir)) if (f.endsWith('.pzl')) fs.rmSync(path.join(dir, f));
 for (const [name, data] of Object.entries(examples)) {
-  fs.writeFileSync(path.join(dir, name + '.vide'), JSON.stringify(data, null, 2) + '\n');
+  fs.writeFileSync(path.join(dir, name + '.pzl'), JSON.stringify(data, null, 2) + '\n');
 }
 console.log(`Создано примеров: ${Object.keys(examples).length}`);

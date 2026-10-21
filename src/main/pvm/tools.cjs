@@ -13,7 +13,7 @@ function hasCompiler(dir) {
 
 /**
  * Папка с утилитами, по порядку: из настроек, из переменной PVM_HOME, встроенные
- * в дистрибутив (resources/pvm), рядом с VisualIDE (../pvm/Release — так лежат
+ * в дистрибутив (resources/pvm), рядом с PazzleIDE (../pvm/Release — так лежат
  * репозитории при разработке), собранные скриптом bundle-pvm (vendor/pvm), из PATH.
  */
 function locateTools({configured, appRoot} = {}) {
@@ -22,7 +22,7 @@ function locateTools({configured, appRoot} = {}) {
     configured && {dir: configured, source: 'настройки'},
     process.env.PVM_HOME && {dir: process.env.PVM_HOME, source: 'PVM_HOME'},
     resources && {dir: path.join(resources, 'pvm'), source: 'встроенные'},
-    appRoot && {dir: path.resolve(appRoot, '..', 'pvm', 'Release'), source: 'рядом с VisualIDE'},
+    appRoot && {dir: path.resolve(appRoot, '..', 'pvm', 'Release'), source: 'рядом с PazzleIDE'},
     appRoot && {dir: path.join(appRoot, 'vendor', 'pvm'), source: 'vendor/pvm'},
     ...String(process.env.PATH || '')
       .split(path.delimiter)

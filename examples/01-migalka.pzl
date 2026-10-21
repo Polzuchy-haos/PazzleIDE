@@ -1,5 +1,5 @@
 {
-  "format": "visualide-project",
+  "format": "pazzleide-project",
   "version": 1,
   "language": "pvm",
   "title": "Мигание светодиодом",
@@ -9,7 +9,7 @@
       "languageVersion": 0,
       "blocks": [
         {
-          "type": "vide_comment",
+          "type": "pazzle_comment",
           "fields": {
             "TEXT": "Мигаем светодиодом 6 раз"
           },

@@ -31,7 +31,7 @@ const categoryStyles = {
 const fontStyle = {family: '"Segoe UI", system-ui, -apple-system, sans-serif', weight: '500', size: 12};
 
 const themes = {
-  dark: Blockly.Theme.defineTheme('vide-dark', {
+  dark: Blockly.Theme.defineTheme('pz-dark', {
     base: Blockly.Themes.Classic,
     blockStyles,
     categoryStyles,
@@ -50,7 +50,7 @@ const themes = {
       cursorColour: '#d0d0d0',
     },
   }),
-  light: Blockly.Theme.defineTheme('vide-light', {
+  light: Blockly.Theme.defineTheme('pz-light', {
     base: Blockly.Themes.Classic,
     blockStyles,
     categoryStyles,

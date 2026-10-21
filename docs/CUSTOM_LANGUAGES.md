@@ -12,7 +12,7 @@
 Проверить результат можно без интерфейса:
 
 ```bash
-node src/cli/vide.mjs hlc examples/02-faktorial.vide
+node src/cli/pazzle.mjs hlc examples/02-faktorial.pzl
 ```
 
 ## Минимальный пакет
@@ -114,7 +114,7 @@ node src/cli/vide.mjs hlc examples/02-faktorial.vide
 "text_print": {
   "switchType": "TEXT",
   "cases": {"String": "WriteLn({{TEXT}});", "Boolean": "WriteLn(BoolToStr({{TEXT}}));"},
-  "default": "WriteLn(VideNum({{TEXT}}));"
+  "default": "WriteLn(PazzleNum({{TEXT}}));"
 }
 ```
 
@@ -166,13 +166,13 @@ node src/cli/vide.mjs hlc examples/02-faktorial.vide
 
 ```json
 "helpers": {
-  "input": ["static String videInput(String p) { ... }"],
-  "inputNum": {"requires": ["input"], "code": ["static double videInputNum(String p) { ... }"]}
+  "input": ["static String pazzleInput(String p) { ... }"],
+  "inputNum": {"requires": ["input"], "code": ["static double pazzleInputNum(String p) { ... }"]}
 },
 "blocks": {
   "text_prompt_ext": {"switch": "TYPE", "cases": {
-    "NUMBER": {"template": "videInputNum({{TEXT}})", "requires": "inputNum"},
-    "TEXT":   {"template": "videInput({{TEXT}})",    "requires": "input"}
+    "NUMBER": {"template": "pazzleInputNum({{TEXT}})", "requires": "inputNum"},
+    "TEXT":   {"template": "pazzleInput({{TEXT}})",    "requires": "input"}
   }}
 }
 ```
@@ -213,7 +213,7 @@ node src/cli/vide.mjs hlc examples/02-faktorial.vide
 * В функциях доступны `{{NAME}}`, `{{PARAMS}}`, `{{PARAMS_WRAPPED}}` (`(a, b)` или пусто, если параметров нет),
   `{{BODY}}`, `{{RETURN}}` и `{{RETURN_TYPE}}`.
 
-**Типы.** Переменные в блоках не имеют типов, поэтому VisualIDE выводит их сама: смотрит, что присваивается
+**Типы.** Переменные в блоках не имеют типов, поэтому PazzleIDE выводит их сама: смотрит, что присваивается
 переменной и что передаётся в функции. Неизвестный тип считается числом. Если переменная используется
 с разными типами, появляется предупреждение.
 
@@ -284,8 +284,8 @@ node src/cli/vide.mjs hlc examples/02-faktorial.vide
 | `lists_length`, `lists_isEmpty` | `VALUE` | — |
 | `lists_getIndex` | `VALUE`, `AT` | `MODE`: `GET`, `GET_REMOVE`, `REMOVE`; `WHERE`: `FROM_START`, `FROM_END`, `FIRST`, `LAST`, `RANDOM` |
 | `lists_setIndex` | `LIST`, `AT`, `TO` | `MODE`: `SET`, `INSERT`; `WHERE`: как выше |
-| `vide_comment` | — | `TEXT` |
-| `vide_raw_code`, `vide_raw_expr` | — | `CODE` (вставляется как есть) |
+| `pazzle_comment` | — | `TEXT` |
+| `pazzle_raw_code`, `pazzle_raw_expr` | — | `CODE` (вставляется как есть) |
 
 Индексы в блоках списков начинаются с 1, как в Scratch. Определения функций (`procedures_defnoreturn`,
 `procedures_defreturn`) описываются не в `blocks`, а в разделе `functions`.

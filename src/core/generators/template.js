@@ -12,8 +12,8 @@ const asText = (tpl) => (Array.isArray(tpl) ? tpl.join('\n') : tpl);
 // Перед кодом каждого оператора Blockly вставляет STATEMENT_PREFIX с id блока.
 // После генерации эти строки-маркеры вырезаются, а из их положения строится
 // таблица «строка кода → блок» (подсветка блока при отладке, точки останова на блоках).
-const MARKER = '@@VIDE_BLOCK@@';
-const MARKER_LINE = /^\s*@@VIDE_BLOCK@@'(.*)'\s*$/;
+const MARKER = '@@PAZZLE_BLOCK@@';
+const MARKER_LINE = /^\s*@@PAZZLE_BLOCK@@'(.*)'\s*$/;
 
 /** Убирает маркеры и лишние пустые строки; возвращает код и номера строк (с 1) → id блока. */
 export function extractBlockMarkers(text) {

@@ -1,11 +1,11 @@
-# VisualIDE для PVM
+# PazzleIDE для PVM
 
 IDE для визуального программирования виртуальной машины [PVM](../pvm) (Pico Virtual Machine — стековая ВМ
 для микроконтроллеров). Программа собирается из блоков, как в Scratch, и сразу превращается в код
 **PVM HLC**. Дальше её можно собрать, выполнить и пошагово отлаживать в симуляторе или на плате по
 последовательному порту.
 
-![VisualIDE](docs/screenshot.png)
+![PazzleIDE](docs/screenshot.png)
 
 ## Возможности
 
@@ -32,7 +32,7 @@ IDE для визуального программирования виртуа�
 
 ## Быстрый старт
 
-**Готовая сборка** (`release/VisualIDE-Setup-*.exe` или `VisualIDE-Portable-*.exe`) уже содержит утилиты PVM
+**Готовая сборка** (`release/PazzleIDE-Setup-*.exe` или `PazzleIDE-Portable-*.exe`) уже содержит утилиты PVM
 (`pvmcc`, `pvmc`, `pvmsim`, `pvmdbg`, `pvmdisasm`, `pvminit` и `lib/`): ставить отдельно ничего не нужно.
 
 Для разработки нужны [Node.js](https://nodejs.org) 20+, а для сборки утилит из исходников ещё CMake и MinGW-w64.
@@ -43,7 +43,7 @@ npm start
 ```
 
 Утилиты ищутся автоматически: настройки (**Файл → Настройки → Утилиты PVM**), переменная `PVM_HOME`,
-встроенные в дистрибутив, `../pvm/Release` рядом с VisualIDE, `vendor/pvm`, `PATH`.
+встроенные в дистрибутив, `../pvm/Release` рядом с PazzleIDE, `vendor/pvm`, `PATH`.
 
 Плата по умолчанию — **COM3, 9600 бод**. В ней должна работать прошивка с агентом отладки PVM
 (`pvm/pvmdbg.c`). Для цели «Плата: программа с хоста» ничего прошивать не нужно.
@@ -60,10 +60,10 @@ npm start
 ## Командная строка
 
 ```bash
-node src/cli/vide.mjs hlc   examples/02-faktorial.vide            # код HLC
-node src/cli/vide.mjs build examples/02-faktorial.vide -o out     # полная сборка в папку out
-node src/cli/vide.mjs run   examples/04-begushchiy-ogon.vide      # симулятор
-node src/cli/vide.mjs run   examples/01-migalka.vide --port COM3  # плата, программа с хоста
+node src/cli/pazzle.mjs hlc   examples/02-faktorial.pzl            # код HLC
+node src/cli/pazzle.mjs build examples/02-faktorial.pzl -o out     # полная сборка в папку out
+node src/cli/pazzle.mjs run   examples/04-begushchiy-ogon.pzl      # симулятор
+node src/cli/pazzle.mjs run   examples/01-migalka.pzl --port COM3  # плата, программа с хоста
 ```
 
 ## Горячие клавиши

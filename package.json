@@ -1,7 +1,7 @@
 {
-  "name": "visualide",
+  "name": "pazzleide",
   "version": "0.1.0",
-  "description": "VisualIDE для PVM: визуальное программирование стековой ВМ PVM блоками (как в Scratch), код PVM HLC, сборка, запуск и отладка в симуляторе и на плате",
+  "description": "PazzleIDE для PVM: визуальное программирование стековой ВМ PVM блоками (как в Scratch), код PVM HLC, сборка, запуск и отладка в симуляторе и на плате",
   "main": "src/main/main.cjs",
   "scripts": {
     "make-examples": "node scripts/make-examples.mjs",
@@ -9,7 +9,7 @@
     "start": "node scripts/build.mjs && node scripts/start.mjs",
     "dev": "node scripts/build.mjs --watch",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "cli": "node src/cli/vide.mjs",
+    "cli": "node src/cli/pazzle.mjs",
     "dist": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder",
     "dist:win": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --win",
     "dist:mac": "node scripts/build.mjs && node scripts/check-vendor.mjs && electron-builder --mac",
@@ -28,14 +28,14 @@
     "esbuild": "^0.28.2",
     "monaco-editor": "^0.57.0"
   },
-  "productName": "VisualIDE",
+  "productName": "PazzleIDE",
   "private": true,
   "bin": {
-    "vide": "src/cli/vide.mjs"
+    "pazzle": "src/cli/pazzle.mjs"
   },
   "build": {
-    "appId": "ru.visualide.app",
-    "productName": "VisualIDE",
+    "appId": "ru.pazzleide.app",
+    "productName": "PazzleIDE",
     "copyright": "© 2026 Daniil Kudinov",
     "directories": {
       "output": "release",
@@ -46,15 +46,15 @@
       "src/main/**/*",
       "dist/renderer/**/*",
       "languages/*.json",
-      "examples/*.vide",
+      "examples/*.pzl",
       "docs/*.md",
       "build/icon.png"
     ],
     "fileAssociations": [
       {
-        "ext": "vide",
-        "name": "Проект VisualIDE",
-        "description": "Проект VisualIDE",
+        "ext": "pzl",
+        "name": "Проект PazzleIDE",
+        "description": "Проект PazzleIDE",
         "role": "Editor"
       }
     ],

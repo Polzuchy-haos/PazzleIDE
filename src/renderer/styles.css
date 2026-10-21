@@ -326,14 +326,14 @@ button svg .fill-path { fill: currentColor; }
 .field-line input { flex: 1; font-family: var(--mono); font-size: 12px; }
 
 /* Точка останова на блоке и текущий блок при отладке. */
-.vide-bp > .blocklyPath { stroke: #e5534b !important; stroke-width: 4px !important; }
-.vide-current > .blocklyPath { stroke: #ffd400 !important; stroke-width: 4px !important; }
+.pz-bp > .blocklyPath { stroke: #e5534b !important; stroke-width: 4px !important; }
+.pz-current > .blocklyPath { stroke: #ffd400 !important; stroke-width: 4px !important; }
 
 /* Monaco: точки останова в поле слева и текущая строка. */
-.vide-bp-glyph::before { content: ''; display: block; width: 10px; height: 10px; margin: 4px 0 0 4px; border-radius: 50%; background: #e5534b; }
-.vide-bp-hint::before { content: ''; display: block; width: 10px; height: 10px; margin: 4px 0 0 4px; border-radius: 50%; background: #e5534b; opacity: 0.25; }
-.vide-current-glyph::after { content: '➜'; color: #ffd400; font-size: 13px; position: relative; left: 2px; top: -1px; }
-.vide-current-line { background: rgba(255, 212, 0, 0.16); }
-.vide-error-line { background: rgba(229, 83, 75, 0.2); }
+.pz-bp-glyph::before { content: ''; display: block; width: 10px; height: 10px; margin: 4px 0 0 4px; border-radius: 50%; background: #e5534b; }
+.pz-bp-hint::before { content: ''; display: block; width: 10px; height: 10px; margin: 4px 0 0 4px; border-radius: 50%; background: #e5534b; opacity: 0.25; }
+.pz-current-glyph::after { content: '➜'; color: #ffd400; font-size: 13px; position: relative; left: 2px; top: -1px; }
+.pz-current-line { background: rgba(255, 212, 0, 0.16); }
+.pz-error-line { background: rgba(229, 83, 75, 0.2); }
 
 [hidden] { display: none !important; }

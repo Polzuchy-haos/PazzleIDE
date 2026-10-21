@@ -1,5 +1,5 @@
 // Собирает утилиты PVM из исходников и кладёт их в vendor/pvm — оттуда они попадают
-// в дистрибутив VisualIDE (resources/pvm), и IDE работает без отдельной установки PVM.
+// в дистрибутив PazzleIDE (resources/pvm), и IDE работает без отдельной установки PVM.
 //
 //   node scripts/bundle-pvm.mjs [--src ../pvm] [--no-build]
 //
