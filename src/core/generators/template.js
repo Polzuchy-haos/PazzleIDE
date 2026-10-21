@@ -117,6 +117,13 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     for (const v of Blockly.Variables.allUsedVarModels(this.workspace_)) {
       this.lastNames[this.getVariableName(v.getId())] = v.getName();
     }
+    // ... и имя функции в коде → её название в блоках (для стека вызовов).
+    for (const block of this.workspace_.getAllBlocks(false)) {
+      if (block.type === 'procedures_defnoreturn' || block.type === 'procedures_defreturn') {
+        const name = block.getFieldValue('NAME');
+        this.lastNames[this.getProcedureName(name)] = name;
+      }
+    }
 
     this.isInitialized = false;
     this.nameDB_.reset();

@@ -337,3 +337,14 @@ button svg .fill-path { fill: currentColor; }
 .pz-error-line { background: rgba(229, 83, 75, 0.2); }
 
 [hidden] { display: none !important; }
+
+/* Стек вызовов и переменные функций. */
+.debug-columns { grid-template-columns: 5fr 4fr 2fr; }
+.debug-columns h4 + table + h4 { margin-top: 12px; }
+table.calls tr.frame { cursor: pointer; }
+table.calls tr.frame:hover td { background: var(--bg-3); }
+table.calls tr.frame.selected td { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+table.calls tr.frame.selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.debug-view.stale .debug-columns { opacity: 0.55; }
+.pz-frame > .blocklyPath { stroke: #4c97ff !important; stroke-width: 4px !important; stroke-dasharray: 6 4; }
+.pz-frame-line { background: rgba(76, 151, 255, 0.16); }

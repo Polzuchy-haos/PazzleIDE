@@ -40,7 +40,8 @@
     "PazzleConstrain",
     "PazzleRandom",
     "PazzleSeed",
-    "PazzleIsPrime"
+    "PazzleIsPrime",
+    "OUT"
   ],
   "types": {
     "Number": "int",
@@ -338,8 +339,14 @@
     "text_print": {
       "switchType": "TEXT",
       "cases": {
-        "Number": "svc(1, {{TEXT}});",
-        "Boolean": "svc(1, {{TEXT}});"
+        "Number": {
+          "template": "OUT = {{TEXT}};",
+          "declare": "volatile int OUT @ 0x4007;"
+        },
+        "Boolean": {
+          "template": "OUT = {{TEXT}};",
+          "declare": "volatile int OUT @ 0x4007;"
+        }
       }
     },
     "variables_get": "{{VAR}}",
@@ -514,7 +521,7 @@
       "previousStatement": null,
       "nextStatement": null,
       "colour": "#0fbd8c",
-      "tooltip": "Вызов Си-обработчика ВМ (SVC). Пустые входы не передаются. В pvmsim: 0 — тик, 1 — печать числа, 2 — сумма"
+      "tooltip": "Вызов Си-обработчика ВМ (SVC). Пустые входы не передаются. В pvmsim: 0 — тик, 2 — сумма (1 свободен)"
     },
     {
       "type": "pvm_svc_value",
@@ -797,7 +804,7 @@
     }
   ],
   "outputFilter": {
-    "keep": "^pvmsim: SVC print -> (-?\\d+)\\s*$",
+    "keep": "^0x[0-9A-Fa-f]+ STORE 0x4007 -> (-?\\d+).*$",
     "replace": "$1"
   }
 }

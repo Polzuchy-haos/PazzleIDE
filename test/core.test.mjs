@@ -224,7 +224,8 @@ describe('артефакты pvmc и pvmdbg', () => {
   });
 
   test('фильтр вывода симулятора', () => {
-    const f = createLineFilter({keep: String.raw`^pvmsim: SVC print -> (-?\d+)\s*$`, replace: '$1'});
-    assert.equal(f.push('0x7 SVC #1\npvmsim: SVC print -> 1') + f.push('0\r\npvmsim: halted\n') + f.flush(), '10\n');
+    // «напечатать» пишет в регистр вывода 0x4007; в трассе pvmsim это STORE 0x4007 -> N.
+    const f = createLineFilter(pvm.pack.outputFilter);
+    assert.equal(f.push('0x3D LOAD 0x0000 -> 5\n0x40 STORE 0x4007 -> 1') + f.push('0 SP 4 - 1\r\npvmsim: halted\n') + f.flush(), '10\n');
   });
 });

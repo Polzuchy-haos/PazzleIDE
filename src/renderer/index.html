@@ -155,14 +155,20 @@
         </div>
         <div class="panel" id="debug-panel" hidden>
           <div class="debug-empty" id="debug-empty">
-            Отладка не запущена. Нажмите <b>Отладка</b> (F5). Точки останова ставятся на блоки
+            Отладка не запущена. Нажмите <b>Отладка</b> (F5) — здесь появятся стек вызовов, переменные функций и глобальные переменные. Точки останова ставятся на блоки
             (правый щелчок → «Точка останова» или F9) и щелчком слева от строки кода HLC.
           </div>
           <div class="debug-view" id="debug-view" hidden>
             <div class="debug-where" id="debug-where"></div>
             <div class="debug-columns">
               <section>
-                <h4>Переменные</h4>
+                <h4>Стек вызовов</h4>
+                <table id="debug-calls" class="calls"></table>
+                <h4 id="debug-locals-title">Переменные функции</h4>
+                <table id="debug-locals"></table>
+              </section>
+              <section>
+                <h4>Глобальные переменные</h4>
                 <table id="debug-vars"></table>
               </section>
               <section>

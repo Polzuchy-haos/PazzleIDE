@@ -45,7 +45,7 @@ const state = {
 };
 
 const consoleView = new ConsoleView($('console-output'));
-const debugView = new DebugView();
+const debugView = new DebugView({onSelectFrame: (frame, index) => showFrame(frame, index)});
 window.pazzleDebug = {state, Blockly, monaco}; // доступ из DevTools
 
 // ---------------------------------------------------------------- утилиты
@@ -209,6 +209,10 @@ function refreshEditorDecorations() {
   const snap = state.debug.snapshot;
   if (state.debug.active && snap?.line && !state.debug.running) {
     items.push({range: new monaco.Range(snap.line, 1, snap.line, 1), options: {isWholeLine: true, className: 'pz-current-line', glyphMarginClassName: 'pz-current-glyph'}});
+  }
+  const frameLine = state.debug.frameLine;
+  if (state.debug.active && frameLine && !state.debug.running) {
+    items.push({range: new monaco.Range(frameLine, 1, frameLine, 1), options: {isWholeLine: true, className: 'pz-frame-line', hoverMessage: {value: 'Место вызова выбранной функции'}}});
   }
   if (!decorations) decorations = state.editor.createDecorationsCollection(items);
   else decorations.set(state.view === 'hlc' ? items : []);
@@ -556,21 +560,53 @@ async function startDebug() {
   }
 }
 
+/** Блок вне видимой области — центрируем его. */
+function revealBlock(block) {
+  const metrics = state.ws.getMetricsManager().getViewMetrics(true);
+  const r = block.getBoundingRectangle();
+  const visible = r.left >= metrics.left && r.top >= metrics.top && r.right <= metrics.left + metrics.width && r.bottom <= metrics.top + metrics.height;
+  if (!visible) state.ws.centerOnBlock(block.id);
+}
+
 function highlightCurrent(snap) {
   const prev = state.debug.currentBlock;
   if (prev) state.ws.getBlockById(prev)?.getSvgRoot()?.classList.remove('pz-current');
   state.debug.currentBlock = null;
+  showFrame(null);
   if (!snap?.line) return;
   const id = blockForLine(state.debug.build.lineBlocks, snap.line);
   const block = id && state.ws.getBlockById(id);
   if (!block) return;
   state.debug.currentBlock = id;
   block.getSvgRoot()?.classList.add('pz-current');
-  // Блок вне видимой области — центрируем его.
-  const metrics = state.ws.getMetricsManager().getViewMetrics(true);
-  const r = block.getBoundingRectangle();
-  const visible = r.left >= metrics.left && r.top >= metrics.top && r.right <= metrics.left + metrics.width && r.bottom <= metrics.top + metrics.height;
-  if (!visible) state.ws.centerOnBlock(id);
+  revealBlock(block);
+}
+
+/**
+ * Выбран кадр стека вызовов: место вызова обводится пунктиром на блоках и
+ * подсвечивается в коде. Кадр #0 — это сама текущая позиция (уже подсвечена).
+ */
+function showFrame(frame, index = 0) {
+  const prev = state.debug.frameBlock;
+  if (prev) state.ws.getBlockById(prev)?.getSvgRoot()?.classList.remove('pz-frame');
+  state.debug.frameBlock = null;
+  state.debug.frameLine = null;
+  if (frame && index > 0 && frame.line) {
+    state.debug.frameLine = frame.line;
+    const id = blockForLine(state.debug.build.lineBlocks, frame.line);
+    const block = id && state.ws.getBlockById(id);
+    if (block) {
+      state.debug.frameBlock = id;
+      block.getSvgRoot()?.classList.add('pz-frame');
+      revealBlock(block);
+    }
+    if (state.view !== 'hlc') showCodeView('hlc');
+    state.editor.revealLineInCenterIfOutsideViewport(frame.line);
+  } else if (frame && state.debug.currentBlock) {
+    const block = state.ws.getBlockById(state.debug.currentBlock);
+    if (block) revealBlock(block);
+  }
+  refreshEditorDecorations();
 }
 
 function onDebugEvent(ev) {

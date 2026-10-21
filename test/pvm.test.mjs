@@ -14,6 +14,8 @@ const require = createRequire(import.meta.url);
 const {locateTools} = require('../src/main/pvm/tools.cjs');
 const {buildProgram} = require('../src/main/pvm/build.cjs');
 const {DebugSession} = require('../src/main/pvm/debug.cjs');
+const {createLineFilter} = require('../src/main/runner.cjs');
+const {spawnSync} = require('node:child_process');
 
 const root = path.resolve(import.meta.dirname, '..');
 const pvm = createLanguage(JSON.parse(fs.readFileSync(path.join(root, 'languages', 'pvm.json'), 'utf8')));
@@ -62,8 +64,8 @@ const vars = (st) => Object.fromEntries(st.variables.map((v) => [v.name, v.words
 
 const EXPECTED = {
   '01-migalka.pzl': {pereklyucheniy: 6, LED: 0},
-  '02-faktorial.pzl': {rezultat: 5040},
-  '03-prostye-chisla.pzl': {skolko: 15, poslednee: 47},
+  '02-faktorial.pzl': {rezultat: 5040, OUT: 5040},
+  '03-prostye-chisla.pzl': {skolko: 15, poslednee: 47, OUT: 15},
   '04-begushchiy-ogon.pzl': {bit: 256, LED: 0},
 };
 
@@ -88,11 +90,11 @@ describe('PVM: сборка и выполнение примеров в симу
 });
 
 describe('PVM: отладка', {skip, timeout: 120_000}, () => {
-  test('точка останова на блоке, шаги, вывод программы', async () => {
+  test('точка останова на блоке, шаги, регистр вывода', async () => {
     const {build: b, lineBlocks, ws} = await build('02-faktorial.pzl');
     const ifReturn = ws.getAllBlocks(false).find((x) => x.type === 'procedures_ifreturn');
     const line = Number(Object.entries(lineBlocks).find(([, id]) => id === ifReturn.id)[0]);
-    const {s, next, output} = session(b.files);
+    const {s, next} = session(b.files);
     let wait = next();
     await s.start();
     await wait;
@@ -121,8 +123,39 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
     st = await wait;
     assert.equal(st.reason, 'halted');
     assert.equal(vars(st).rezultat, 5040);
-    assert.match(output.join(''), /5040/);
+    assert.equal(vars(st).OUT, 5040); // «напечатать» пишет в регистр вывода 0x4007
     await s.stop();
+  });
+
+  test('стек вызовов: рекурсия, параметры каждого кадра', async () => {
+    const {build: b, lineBlocks, ws} = await build('02-faktorial.pzl');
+    const ifReturn = ws.getAllBlocks(false).find((x) => x.type === 'procedures_ifreturn');
+    const line = Number(Object.entries(lineBlocks).find(([, id]) => id === ifReturn.id)[0]);
+    const {s, next} = session(b.files);
+    let wait = next();
+    await s.start();
+    await wait;
+    await s.setBreakpoints([line]);
+    for (let hit = 0; hit < 3; hit++) {
+      wait = next();
+      s.continue();
+      await wait;
+    }
+    const st = s.last;
+    assert.deepEqual(
+      st.frames.map((f) => [f.func, f.vars.find((v) => v.name === 'n')?.value ?? null]),
+      [['faktorial', 5], ['faktorial', 6], ['faktorial', 7], ['main', null]],
+    );
+    assert.equal(st.frames[0].line, line);
+    assert.ok(st.frames[1].line > line, 'внешний кадр стоит на строке рекурсивного вызова');
+    await s.stop();
+  });
+
+  test('запуск в pvmsim: вывод программы — записи в 0x4007', async () => {
+    const {build: b} = await build('03-prostye-chisla.pzl');
+    const r = spawnSync(tools.found.pvmsim, [b.files.bin], {encoding: 'utf8', maxBuffer: 64 << 20});
+    const f = createLineFilter(pvm.pack.outputFilter);
+    assert.equal(f.push(r.stdout) + f.flush(), '15\n');
   });
 
   test('шаг с обходом не заходит в функцию', async () => {

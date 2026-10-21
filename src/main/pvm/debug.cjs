@@ -26,6 +26,26 @@ function programOutput(line) {
   return m ? m[1] + '\n' : null;
 }
 
+/** Значение переменной: число или null (нет на этом месте программы — «?», «not there yet»). */
+function wordValue(raw) {
+  const t = String(raw ?? '').trim();
+  return /^-?\d+$/.test(t) ? Number(t) : null;
+}
+
+function frameVar(name, kind, offset, raw) {
+  return {name: String(name), kind: kind === 'param' ? 'param' : 'local', offset, value: wordValue(raw)};
+}
+
+function globalVar(name, address, size, rawValues) {
+  return {
+    name: String(name),
+    address,
+    words: size,
+    area: address >= 0x4000 ? 'usrsect' : 'ram',
+    values: rawValues.map(wordValue),
+  };
+}
+
 function spawnTool(cmd, args) {
   return spawn(cmd, args, {windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']});
 }
@@ -78,7 +98,9 @@ class MachineDriver {
     const reply = {ok: true};
     for (const p of parts.slice(1)) {
       const eq = p.indexOf('=');
-      if (eq > 0) reply[p.slice(0, eq)] = Number(p.slice(eq + 1));
+      if (eq <= 0) continue;
+      const raw = p.slice(eq + 1);
+      reply[p.slice(0, eq)] = /^-?\d+$/.test(raw) ? Number(raw) : raw;
     }
     return reply;
   }
@@ -155,6 +177,33 @@ class MachineDriver {
     const r = await this.command(`data ${address} ${count}`);
     if (!r.ok) return null;
     return Array.from({length: r.n}, (_, i) => r[`v${i}`]);
+  }
+
+  /** Стек вызовов с параметрами и локальными переменными каждого кадра (null — pvmdbg не умеет). */
+  async callStack() {
+    const r = await this.command('frames');
+    if (!r.ok) return null;
+    const frames = [];
+    for (let i = 0; i < r.n; i++) {
+      const v = await this.command(`vars ${i}`);
+      const vars = [];
+      if (v.ok) {
+        for (let k = 0; k < v.n; k++) {
+          vars.push(frameVar(v[`name${k}`], v[`kind${k}`], v[`off${k}`], v[`val${k}`]));
+        }
+      }
+      frames.push({index: i, func: String(r[`fn${i}`]), pc: r[`pc${i}`], built: r[`built${i}`] === 1, vars});
+    }
+    return frames;
+  }
+
+  /** Глобальные переменные по карте отладки (null — pvmdbg не умеет). */
+  async globals() {
+    const r = await this.command('globals');
+    if (!r.ok) return null;
+    return Array.from({length: r.n}, (_, i) =>
+      globalVar(r[`name${i}`], r[`addr${i}`], r[`size${i}`], String(r[`val${i}`] ?? '').split(',')),
+    );
   }
 
   async stop() {
@@ -331,6 +380,35 @@ class HostCliDriver {
     return values.length ? values : null;
   }
 
+  async callStack() {
+    const text = await this.command('bt full');
+    if (/unknown command/.test(text)) return null;
+    const frames = [];
+    for (const line of text.split('\n')) {
+      const head = /^\s*>?\s*#(\d+)\s+([A-Za-z_]\w*)\((.*?)\)\s+0x([0-9A-Fa-f]+)/.exec(line);
+      if (head) {
+        frames.push({index: Number(head[1]), func: head[2], pc: parseInt(head[4], 16), built: true, vars: []});
+        continue;
+      }
+      const v = /^\s+([A-Za-z_]\w*)\s+=\s+(.*?)\s+(param|local)\s+FP([+-]\d+)/.exec(line);
+      if (v && frames.length) frames[frames.length - 1].vars.push(frameVar(v[1], v[3], Number(v[4]), v[2].trim()));
+    }
+    return frames;
+  }
+
+  async globals() {
+    const text = await this.command('globals');
+    if (/unknown command/.test(text)) return null;
+    const out = [];
+    for (const line of text.split('\n')) {
+      const m = /^\s+([A-Za-z_]\w*)\s+0x([0-9A-Fa-f]+)\s+=\s+(.*)$/.exec(line);
+      if (!m) continue;
+      const values = m[3].trim().replace(/^\{|\}$/g, '').split(',');
+      out.push(globalVar(m[1], parseInt(m[2], 16), values.length, values));
+    }
+    return out;
+  }
+
   async stop() {
     if (!this.proc) return;
     const proc = this.proc;
@@ -385,9 +463,9 @@ class DebugSession extends EventEmitter {
     if (target === 'board-host') {
       this.driver = new HostCliDriver({pvmdbg, args: ['--host', files.bin, ...serial, '--map', files.map], onOutput, onExit});
     } else if (target === 'board-flash') {
-      this.driver = new MachineDriver({pvmdbg, args: serial, onOutput, onExit});
+      this.driver = new MachineDriver({pvmdbg, args: [...serial, '--map', files.map], onOutput, onExit});
     } else {
-      this.driver = new MachineDriver({pvmdbg, args: [files.bin], onOutput, onExit});
+      this.driver = new MachineDriver({pvmdbg, args: [files.bin, '--map', files.map], onOutput, onExit});
     }
     this.driver.start();
     let st;
@@ -597,7 +675,11 @@ class DebugSession extends EventEmitter {
       func: pc !== null ? functionAt(this.listing, pc) : null,
       instruction: pc !== null ? this.listing.instructions.get(pc)?.text || null : null,
       stack: await this.driver.stack(8),
-      variables: await this.readVariables(),
+      frames: ((await this.driver.callStack?.()) || []).map((f) => {
+        const at = this.map.locationFor(f.pc);
+        return {...f, line: at && baseName(at.file) === this.sourceFile ? at.line : null, file: at ? baseName(at.file) : null, fileLine: at ? at.line : null};
+      }),
+      variables: (await this.driver.globals?.()) || (await this.readVariables()),
     };
     this.last = snapshot;
     this.emit('state', snapshot);
