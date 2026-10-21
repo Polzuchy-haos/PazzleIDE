@@ -440,14 +440,21 @@
     "pvm_halt": "halt;",
     "pvm_section": {
       "template": "",
-      "declare": "section {{KIND}} {{SIZE}};"
+      "declare": "section {{KIND}} {{SIZE}};",
+      "declareOrder": 0
     },
     "pazzle_comment": "// {{TEXT}}",
     "pazzle_raw_code": "{{CODE}}",
     "pazzle_raw_expr": {
       "template": "{{CODE}}",
       "order": 99
-    }
+    },
+    "pvm_const_define": {
+      "template": "",
+      "declare": "const int {{NAME|constname}} = {{VALUE}};",
+      "declareOrder": 10
+    },
+    "pvm_const_get": "{{NAME|constname}}"
   },
   "customBlocks": [
     {
@@ -673,9 +680,50 @@
       "nextStatement": null,
       "colour": "#0fbd8c",
       "tooltip": "Объявление размера памяти целевой ВМ (section): выход за границы — ошибка компиляции"
+    },
+    {
+      "type": "pvm_const_define",
+      "message0": "константа %1 = %2",
+      "args0": [
+        {
+          "type": "field_input",
+          "name": "NAME",
+          "text": "МАКС"
+        },
+        {
+          "type": "input_value",
+          "name": "VALUE",
+          "check": "Number"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": "#CF63CF",
+      "tooltip": "Именованная константа: const int ИМЯ = значение. Значение вычисляет компилятор — числа, арифметика, биты и другие константы, объявленные выше. В RAM не попадает."
+    },
+    {
+      "type": "pvm_const_get",
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_label_serializable",
+          "name": "NAME",
+          "text": "МАКС"
+        }
+      ],
+      "output": "Number",
+      "colour": "#CF63CF",
+      "tooltip": "Значение константы"
     }
   ],
   "toolbox": [
+    {
+      "kind": "category",
+      "name": "Константы",
+      "colour": "#CF63CF",
+      "custom": "PVM_CONSTANTS"
+    },
     {
       "kind": "category",
       "name": "PVM",

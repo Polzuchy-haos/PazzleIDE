@@ -11,17 +11,21 @@ const MAP = {
 };
 
 export function transliterate(text) {
-  let out = '';
-  for (const ch of String(text)) {
-    const lower = ch.toLowerCase();
-    if (lower in MAP) {
-      const t = MAP[lower];
-      out += ch !== lower && t ? t[0].toUpperCase() + t.slice(1) : t;
-    } else {
-      out += ch;
+  // Слово целиком из заглавных (обычно константа: «ЗАДЕРЖКА») -> тоже заглавными: ZADERZHKA.
+  return String(text).replace(/\p{L}+/gu, (word) => {
+    const allCaps = word.length > 1 && word === word.toUpperCase() && word !== word.toLowerCase();
+    let out = '';
+    for (const ch of word) {
+      const lower = ch.toLowerCase();
+      if (lower in MAP) {
+        const t = MAP[lower];
+        out += allCaps ? t.toUpperCase() : ch !== lower && t ? t[0].toUpperCase() + t.slice(1) : t;
+      } else {
+        out += ch;
+      }
     }
-  }
-  return out;
+    return out;
+  });
 }
 
 export function toIdentifier(name) {

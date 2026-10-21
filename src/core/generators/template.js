@@ -28,6 +28,7 @@ export function extractBlockMarkers(text) {
     }
     const line = raw.replace(/[ \t]+$/, '');
     if (!line && (!out.length || out[out.length - 1] === '')) continue; // не больше одной пустой строки подряд
+    if (/^\s*}/.test(line) && out[out.length - 1] === '') out.pop(); // без пустой строки перед «}»
     out.push(line);
     if (pending !== null && line) {
       lineBlocks[out.length] = pending;
@@ -82,6 +83,7 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     this.workspace_ = workspace;
     this.types = inferTypes(workspace);
     this.helpers_ = new Map();
+    this.helperOrder_ = new Map(); // ключ -> порядок в {{HELPERS}} (меньше — выше)
     this.functions_ = [];
     this.prototypes_ = [];
     this.temps_ = new Map(); // `${block.id}:${base}` -> {name, type}
@@ -102,7 +104,15 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
     const sep = (s, d) => (s === undefined ? d : s);
     const vars = {
       BODY: code,
-      HELPERS: [...this.helpers_.values()].join('\n\n'),
+      // Объявления по порядку: сначала section и константы, затем порты и вспомогательный код.
+      HELPERS: [...this.helpers_.keys()]
+        .map((key, i) => ({key, i, order: this.helperOrder_.get(key) ?? 100}))
+        .sort((a, b) => a.order - b.order || a.i - b.i)
+        // Однострочные объявления одного вида (константы, порты) — подряд, без пустых строк.
+        .reduce((text, {key, order}, i, all) => {
+          const sameGroup = i > 0 && key.startsWith('decl:') && all[i - 1].key.startsWith('decl:') && all[i - 1].order === order;
+          return text + (i === 0 ? '' : sameGroup ? '\n' : '\n\n') + this.helpers_.get(key);
+        }, ''),
       FUNCTIONS: this.functions_.join(sep(p.functions?.separator, '\n\n')),
       PROTOTYPES: this.prototypes_.join('\n'),
       VARIABLES: decls.length
@@ -195,7 +205,7 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
       const merged = {...inherited};
       for (const k of ['order', 'argOrder', 'inputOrders', 'fields']) if (k in spec) merged[k] = spec[k];
       this.require(spec.requires);
-      this.declare(block, spec.declare, ctx);
+      this.declare(block, spec.declare, ctx, spec.declareOrder);
       if ('switch' in spec) {
         const value = this.switchValue(block, spec.switch, ctx);
         spec = spec.cases?.[value] ?? spec.default;
@@ -233,10 +243,12 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
   }
 
   /** Объявление верхнего уровня, зависящее от блока (например, `volatile int LED @ 0x4000;`). */
-  declare(block, template, ctx) {
+  declare(block, template, ctx, order) {
     if (template == null) return;
     const text = this.renderText(template, block, ctx);
-    if (text.trim()) this.helpers_.set('decl:' + text, text);
+    if (!text.trim()) return;
+    this.helpers_.set('decl:' + text, text);
+    if (order !== undefined) this.helperOrder_.set('decl:' + text, order);
   }
 
   renderBlock(block, rawSpec) {
@@ -312,6 +324,8 @@ export class TemplateGenerator extends Blockly.CodeGenerator {
       case 'lower': return value.toLowerCase();
       case 'capitalize': return value.charAt(0).toUpperCase() + value.slice(1);
       case 'trim': return value.trim();
+      // Имя константы из блока -> идентификатор: транслитерация, без конфликтов с переменными и функциями.
+      case 'constname': return this.nameDB_ ? this.nameDB_.getName(value, 'CONSTANT') : value;
       case 'int': return /^-?[\d.]+(e[-+]?\d+)?$/i.test(value) ? String(Math.trunc(Number(value))) : value;
       case 'float': return /^-?\d+$/.test(value) ? value + '.0' : value;
       default: return value;

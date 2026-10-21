@@ -20,6 +20,8 @@ const portSet = (value, name = 'LED', addr = '0x4000') => ({type: 'pvm_port_set'
 const pause = (ticks) => ({type: 'pvm_delay', inputs: {TICKS: ticks}});
 const section = (kind, size) => ({type: 'pvm_section', fields: {KIND: kind, SIZE: size}});
 const comment = (text) => ({type: 'pazzle_comment', fields: {TEXT: text}});
+const constDef = (name, value) => ({type: 'pvm_const_define', fields: {NAME: name}, inputs: {VALUE: value}});
+const constGet = (name) => val({type: 'pvm_const_get', fields: {NAME: name}});
 
 function seq(...blocks) {
   const list = blocks.flat().filter(Boolean);
@@ -126,6 +128,28 @@ examples['04-begushchiy-ogon'] = project(
       set('bit', n(1)),
       repeat(n(8), [portSet(get('bit')), set('bit', bits('SHL', get('bit'), n(1))), pause(n(50))]),
       portSet(n(0)),
+    ),
+  ],
+);
+
+examples['05-konstanty'] = project(
+  'Константы',
+  'Именованные константы: число мигания, пауза, маска бита и константа, вычисленная из другой. В RAM они не попадают.',
+  [['count', 'счёт']],
+  [
+    seq(
+      comment('Константы вычисляет компилятор, их можно использовать как обычные числа'),
+      constDef('МИГАНИЙ', n(4)),
+      constDef('ПАУЗА', n(50)),
+      constDef('МАСКА', bits('SHL', n(1), n(2))),
+      constDef('ИТОГ', arith('MULTIPLY', constGet('МИГАНИЙ'), n(2))),
+      set('count', n(0)),
+      repeat(constGet('МИГАНИЙ'), [
+        portSet(bits('XOR', portGet(), constGet('МАСКА'))),
+        change('count', n(1)),
+        pause(constGet('ПАУЗА')),
+      ]),
+      print(constGet('ИТОГ')),
     ),
   ],
 );

@@ -1,0 +1,30 @@
+0x0000 main.hlc:17
+0x0001 main.hlc:19
+0x0009 main.hlc:20
+0x001B main.hlc:21
+0x0027 main.hlc:22
+0x0033 main.hlc:23
+0x003A main.hlc:20
+0x0049 main.hlc:25
+0x0053 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:14
+0x0054 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:15
+0x005F F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:18
+0x0060 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:19
+0x0066 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:20
+0x0090 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:28
+0x0091 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:29
+0x0094 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:30
+0x009F F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:31
+0x00B0 F:\Project\VisualIDE\vendor\pvm\lib\time.hlc:31
+@func 0x0000 0x0053 main
+@func 0x0053 0x005F Time_GetTick
+@func 0x005F 0x0090 Time_Elapsed
+@func 0x0090 0x00B5 Time_Delay
+@var Time_Elapsed param old -3 0x0060
+@var Time_Elapsed local now 0 0x0066
+@var Time_Delay param ticks -3 0x0091
+@var Time_Delay local start 0 0x0094
+@global LED 0x4000 1
+@global OUT 0x4007 1
+@global schyot 0x0000 1
+@global count 0x0001 1

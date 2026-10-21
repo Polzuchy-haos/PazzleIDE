@@ -35,6 +35,8 @@ function load(json) {
 describe('транслитерация', () => {
   test('кириллица -> латиница', () => {
     assert.equal(transliterate('Счётчик'), 'Schyotchik');
+    assert.equal(transliterate('ЗАДЕРЖКА'), 'ZADERZHKA');
+    assert.equal(toIdentifier('МАКС скорость'), 'MAKS_skorost');
     assert.equal(toIdentifier('моя переменная'), 'moya_peremennaya');
     assert.equal(toIdentifier('1-й шаг'), 'v_1_y_shag');
   });
@@ -184,6 +186,36 @@ describe('язык PVM HLC', () => {
     assert.equal(project.format, 'pazzleide-project');
     const {code} = generateCode(pvm, load(project.workspace));
     assert.match(code, /\/\/ x\n\s*halt;/);
+  });
+
+  test('константы: объявляются до портов и функций, имя не конфликтует с переменной', () => {
+    const num = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+    const get = (name) => ({block: {type: 'pvm_const_get', fields: {NAME: name}}});
+    const ws = load({
+      variables: [{id: 'v', name: 'шаг'}],
+      blocks: {
+        blocks: [
+          {type: 'pvm_port_set', fields: {NAME: 'LED', ADDR: '0x4000'}, inputs: {VALUE: get('шаг')}, next: {block: {type: 'variables_set', fields: {VAR: {id: 'v'}}, inputs: {VALUE: get('двойной шаг')}}}},
+          {
+            type: 'pvm_const_define',
+            y: 300,
+            fields: {NAME: 'шаг'},
+            inputs: {VALUE: num(5)},
+            next: {block: {type: 'pvm_const_define', fields: {NAME: 'двойной шаг'}, inputs: {VALUE: {block: {type: 'math_arithmetic', fields: {OP: 'MULTIPLY'}, inputs: {A: get('шаг'), B: num(2)}}}}}},
+          },
+        ],
+      },
+    });
+    const {code, unsupported} = generateCode(pvm, ws);
+    assert.deepEqual(unsupported, []);
+    const constA = code.indexOf('const int ');
+    assert.ok(constA >= 0 && constA < code.indexOf('volatile int LED'), 'константы выше портов');
+    const constName = /const int (\w+) = 5;/.exec(code)[1];
+    assert.match(code, new RegExp(`const int dvoynoy_shag = ${constName} \\* 2;`));
+    assert.match(code, new RegExp(`LED = ${constName};`));
+    const varName = /^int (shag\w*);/m.exec(code)[1]; // переменная «шаг» получила своё имя
+    assert.notEqual(constName, varName);
+    assert.match(code, new RegExp(`${varName} = dvoynoy_shag;`));
   });
 
   test('имена: HLC -> блоки', () => {

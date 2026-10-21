@@ -67,6 +67,7 @@ const EXPECTED = {
   '02-faktorial.pzl': {rezultat: 5040, OUT: 5040},
   '03-prostye-chisla.pzl': {skolko: 15, poslednee: 47, OUT: 15},
   '04-begushchiy-ogon.pzl': {bit: 256, LED: 0},
+  '05-konstanty.pzl': {schyot: 4, LED: 0, OUT: 8},
 };
 
 describe('PVM: сборка и выполнение примеров в симуляторе', {skip, timeout: 120_000}, () => {

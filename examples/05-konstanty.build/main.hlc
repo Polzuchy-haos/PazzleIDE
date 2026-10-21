@@ -1,0 +1,26 @@
+// Сгенерировано PazzleIDE (PVM HLC)
+
+const int MIGANIY = 4;
+const int PAUZA = 50;
+const int MASKA = 1 << 2;
+const int ITOG = MIGANIY * 2;
+
+volatile int LED @ 0x4000;
+
+import time;
+
+volatile int OUT @ 0x4007;
+
+int schyot;
+int count;
+
+void main() {
+    // Константы вычисляет компилятор, их можно использовать как обычные числа
+    schyot = 0;
+    for (count = 0; count < MIGANIY; count++) {
+        LED = LED ^ MASKA;
+        schyot += 1;
+        Time_Delay(PAUZA);
+    }
+    OUT = ITOG;
+}

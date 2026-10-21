@@ -115,8 +115,54 @@ function injectWorkspace() {
     oneBasedIndex: true,
   });
   ws.addChangeListener(onWorkspaceChange);
+  ws.registerToolboxCategoryCallback('PVM_CONSTANTS', constantsFlyout);
   state.ws = ws;
   return ws;
+}
+
+// ---------------------------------------------------------------- константы
+
+/** Имена объявленных констант по порядку (без повторов). */
+function definedConstants(ws = state.ws) {
+  const names = [];
+  for (const b of ws.getAllBlocks(true)) {
+    if (b.type === 'pvm_const_define' && b.isEnabled()) {
+      const name = b.getFieldValue('NAME').trim();
+      if (name && !names.includes(name)) names.push(name);
+    }
+  }
+  return names;
+}
+
+/** Категория «Константы»: новое объявление и блоки всех объявленных констант. */
+function constantsFlyout(ws) {
+  const names = definedConstants(ws);
+  let i = 1;
+  while (names.includes(`КОНСТ${i}`)) i++;
+  const items = [
+    {kind: 'label', text: 'Объявите константу (в начале программы):'},
+    {kind: 'block', type: 'pvm_const_define', fields: {NAME: `КОНСТ${i}`}, inputs: {VALUE: {shadow: {type: 'math_number', fields: {NUM: 10}}}}},
+  ];
+  if (names.length) {
+    items.push({kind: 'label', text: 'Объявленные константы:'});
+    for (const name of names) items.push({kind: 'block', type: 'pvm_const_get', fields: {NAME: name}});
+  } else {
+    items.push({kind: 'label', text: 'После объявления здесь появятся блоки её значения.'});
+  }
+  return items;
+}
+
+/** Переименовали константу в объявлении — переименовываем и блоки её значения. */
+function renameConstantUses(e) {
+  if (e.type !== Blockly.Events.BLOCK_CHANGE || e.element !== 'field' || e.name !== 'NAME') return;
+  const block = state.ws.getBlockById(e.blockId);
+  if (block?.type !== 'pvm_const_define') return;
+  const from = String(e.oldValue).trim();
+  const to = String(e.newValue).trim();
+  if (!from || from === to || definedConstants().includes(from)) return; // старое имя ещё объявлено в другом месте
+  for (const b of state.ws.getAllBlocks(false)) {
+    if (b.type === 'pvm_const_get' && b.getFieldValue('NAME') === from) b.setFieldValue(to, 'NAME');
+  }
 }
 
 function recreateWorkspace() {
@@ -135,6 +181,7 @@ function onWorkspaceChange(e) {
   if (e.type === Blockly.Events.BLOCK_DELETE) {
     for (const id of e.ids || []) state.breakpoints.delete(id);
   }
+  renameConstantUses(e);
   setDirty(true);
   scheduleRegenerate();
   scheduleAutosave();
@@ -144,9 +191,22 @@ function onWorkspaceChange(e) {
 const appliedWarnings = new Map();
 function applyBlockWarnings() {
   const unsupported = new Set(state.generated.unsupported || []);
+  const constCount = new Map();
+  for (const b of state.ws.getAllBlocks(false)) {
+    if (b.type === 'pvm_const_define' && b.isEnabled()) {
+      const name = b.getFieldValue('NAME').trim();
+      constCount.set(name, (constCount.get(name) || 0) + 1);
+    }
+  }
   for (const block of state.ws.getAllBlocks(false)) {
     let text = state.buildErrors.get(block.id) || null;
     if (!text && unsupported.has(block.type)) text = 'Этот блок нельзя перевести в PVM HLC (в языке только целые числа)';
+    if (!text && block.type === 'pvm_const_get' && !constCount.has(block.getFieldValue('NAME').trim())) {
+      text = `Константа «${block.getFieldValue('NAME')}» не объявлена — добавьте блок «константа … =» из категории «Константы»`;
+    }
+    if (!text && block.type === 'pvm_const_define' && constCount.get(block.getFieldValue('NAME').trim()) > 1) {
+      text = `Константа «${block.getFieldValue('NAME')}» объявлена несколько раз`;
+    }
     if ((appliedWarnings.get(block.id) || null) === text) continue;
     block.setWarningText(text);
     if (text) appliedWarnings.set(block.id, text);
