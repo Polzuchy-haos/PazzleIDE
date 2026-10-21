@@ -111,4 +111,4 @@ node src/cli/pazzle.mjs run   examples/01-migalka.pzl --port COM3  # плата,
 ## Лицензии компонентов
 
 Blockly — Apache 2.0, Monaco Editor — MIT, Electron — MIT. Утилиты PVM — проект PVM.
-Лицензия самого проекта пока не выбрана (`UNLICENSED` в `package.json`).
+PazzleIDE распространяется по лицензии MIT (см. [LICENSE](LICENSE)).

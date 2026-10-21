@@ -19,7 +19,7 @@
     "pvm:bundle": "node scripts/bundle-pvm.mjs"
   },
   "author": "Daniil Kudinov",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "devDependencies": {
     "blockly": "^13.4.0",
