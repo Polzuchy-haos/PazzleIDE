@@ -436,6 +436,7 @@ class DebugSession extends EventEmitter {
    * @param {object} o.files    {bin, map, lst, hlc} — результат сборки
    * @param {string} [o.port]   COM-порт платы
    * @param {number} [o.baud]
+   * @param {string[]} [o.link] аргументы подключения pvmdbg вместо port/baud (например, ['--tcp', 'host:5555'])
    */
   constructor(o) {
     super();
@@ -456,10 +457,11 @@ class DebugSession extends EventEmitter {
   }
 
   async start() {
-    const {target, pvmdbg, files, port, baud} = this.o;
+    const {target, pvmdbg, files, port, baud, link} = this.o;
     const onOutput = (text, kind) => this.emit('output', {text, kind});
     const onExit = (code) => this.finish(this.stopping ? "Сессия отладки завершена" : `pvmdbg завершился (код ${code})`);
-    const serial = port ? ['--port', port, '--baud', String(baud || 9600)] : [];
+    // link — готовые аргументы подключения (--port … или --tcp …), иначе последовательный порт.
+    const serial = link || (port ? ['--port', port, '--baud', String(baud || 9600)] : []);
     if (target === 'board-host') {
       this.driver = new HostCliDriver({pvmdbg, args: ['--host', files.bin, ...serial, '--map', files.map], onOutput, onExit});
     } else if (target === 'board-flash') {

@@ -2,16 +2,20 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const {normalizeTargets} = require('./targets.cjs');
 
 const DEFAULTS = {
   theme: 'dark', // dark | light
   renderer: 'zelos', // zelos (как Scratch) | geras | thrasos
   fontSize: 14,
   pvmTools: '', // папка с pvmcc, pvmc, pvmsim, pvmdbg (пусто — искать автоматически)
-  target: 'sim', // sim | board-host | board-flash
-  port: 'COM3',
+  target: 'sim', // id текущей цели
+  targets: null, // список целей (src/main/targets.cjs); null — встроенные
+  port: 'COM3', // порт и скорость для новых целей
   baud: 9600,
   rawOutput: false, // не фильтровать вывод симулятора (показывать трассировку)
+  layout: 'blocks', // рабочий стол: blocks (пазлы) | hlc | ide
+  folder: '', // папка рабочего стола «IDE»
   window: {width: 1440, height: 900, maximized: false},
 };
 
@@ -25,6 +29,13 @@ class Settings {
     } catch {
       // Первый запуск или повреждённый файл — используем значения по умолчанию.
     }
+    this.data.targets = normalizeTargets(this.data.targets, this.data);
+    if (!this.data.targets.some((t) => t.id === this.data.target)) this.data.target = this.data.targets[0].id;
+  }
+
+  /** Текущая цель. */
+  target() {
+    return structuredClone(this.data.targets.find((t) => t.id === this.data.target) || this.data.targets[0]);
   }
 
   get() {
@@ -33,6 +44,8 @@ class Settings {
 
   set(patch) {
     this.data = {...this.data, ...patch};
+    if ('targets' in patch) this.data.targets = normalizeTargets(this.data.targets, this.data);
+    if (!this.data.targets.some((t) => t.id === this.data.target)) this.data.target = this.data.targets[0].id;
     try {
       fs.mkdirSync(path.dirname(this.file), {recursive: true});
       fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));

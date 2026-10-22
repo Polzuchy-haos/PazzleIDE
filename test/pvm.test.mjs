@@ -15,6 +15,7 @@ const {locateTools} = require('../src/main/pvm/tools.cjs');
 const {buildProgram} = require('../src/main/pvm/build.cjs');
 const {DebugSession} = require('../src/main/pvm/debug.cjs');
 const {createLineFilter} = require('../src/main/runner.cjs');
+const targets = require('../src/main/targets.cjs');
 const {spawnSync} = require('node:child_process');
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -61,6 +62,7 @@ function session(files, options = {}) {
 }
 
 const vars = (st) => Object.fromEntries(st.variables.map((v) => [v.name, v.words > 1 ? v.values : v.values?.[0]]));
+const vars_ = vars;
 
 const EXPECTED = {
   '01-migalka.pzl': {pereklyucheniy: 6, LED: 0},
@@ -220,6 +222,67 @@ describe('PVM: отладка', {skip, timeout: 120_000}, () => {
     assert.equal(st.line, callLine + 1);
     assert.equal(vars(st).rezultat, 5040);
     await s.stop();
+  });
+});
+
+describe('PVM: цели', {skip, timeout: 120_000}, () => {
+  test('ограничения памяти цели: программа, которая не помещается, не собирается', async () => {
+    const g = generate('03-prostye-chisla.pzl'); // три глобальные переменные
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pz-pvm-'));
+    const tight = await buildProgram({code: g.code, buildDir: dir, tools, limits: {ram: 2}});
+    assert.equal(tight.ok, false);
+    assert.match(tight.log, /does not fit in RAM \(2 words\)/);
+    const roomy = await buildProgram({code: g.code, buildDir: dir, tools, limits: {code: 4096, ram: 16, stack: 64}});
+    assert.equal(roomy.ok, true, roomy.log);
+    assert.equal(roomy.memory.ram.total, 16);
+    assert.equal(roomy.memory.stack.total, 64);
+    assert.equal(roomy.memory.code.total, 4096);
+    const tiny = await buildProgram({code: g.code, buildDir: dir, tools, limits: {code: 8}});
+    assert.equal(tiny.ok, false);
+    assert.match(tiny.log, /exceeds the declared \.code size of 8 bytes/);
+  });
+
+  test('блок «память» в проекте важнее ограничения цели', async () => {
+    const g = generate('01-migalka.pzl'); // section ram 64 из блока
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pz-pvm-'));
+    const r = await buildProgram({code: g.code, buildDir: dir, tools, limits: {ram: 8}});
+    assert.equal(r.ok, true, r.log);
+    assert.deepEqual(r.limits.own, ['ram']);
+    assert.equal(r.memory.ram.total, 64);
+  });
+
+  // pvmboard — «плата-процесс» по TCP; мост цели запускает её, pvmdbg подключается по --tcp.
+  const pvmboard = [tools.found.pvmboard, path.join(root, '..', 'pvm', 'build', 'debugger', 'pvmboard.exe'), path.join(root, 'vendor', 'pvm', 'pvmboard.exe'), path.join(root, '..', 'pvm', 'build', 'debugger', 'pvmboard')].find(
+    (p) => p && fs.existsSync(p),
+  );
+  test('цель по TCP с мостом (pvmboard): прошитая программа отлаживается до HALT', {skip: !pvmboard && 'нет pvmboard'}, async () => {
+    const {build: b} = await build('02-faktorial.pzl');
+    const target = targets.normalizeTarget({
+      mode: 'board-flash',
+      connection: 'tcp',
+      tcp: '5577',
+      bridge: `"${pvmboard}" "\${bin}" --listen \${tcpPort} --paused --once`,
+      bridgeReady: 'debugger on',
+    });
+    const vars = targets.targetVariables({target, files: b.files, tools});
+    const env = targets.commandEnv(vars, target.env);
+    let log = '';
+    const bridge = await targets.startBridge({...target, bridge: targets.expandVariables(target.bridge, vars, env)}, {env, onOutput: (o) => (log += o.text)});
+    try {
+      const {s, next} = session(b.files, {target: 'board-flash', link: targets.pvmdbgLink(target)});
+      let wait = next();
+      await s.start();
+      await wait;
+      wait = next();
+      s.continue();
+      const st = await wait;
+      assert.equal(st.reason, 'halted');
+      assert.equal(vars_(st).rezultat, 5040);
+      await s.stop();
+      assert.match(log, /debugger connected/);
+    } finally {
+      bridge.stop();
+    }
   });
 });
 

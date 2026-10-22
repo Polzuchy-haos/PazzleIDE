@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="app.css">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-layout="blocks">
   <header class="toolbar">
     <div class="brand" title="PazzleIDE для PVM">
       <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
@@ -19,11 +19,23 @@
       <span>PazzleIDE <small>PVM</small></span>
     </div>
 
+    <div class="segmented" id="layout-switch" role="tablist" title="Рабочий стол">
+      <button data-layout="blocks" title="Пазлы: блоки, код HLC и отладка (Ctrl+1)">
+        <svg viewBox="0 0 24 24"><path d="M4 5h7v3a1.5 1.5 0 0 0 3 0V5h6v6h-3a1.5 1.5 0 0 0 0 3h3v6H4z"/></svg><span>Пазлы</span>
+      </button>
+      <button data-layout="hlc" title="HLC: только код, сборка и отладка (Ctrl+2)">
+        <svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5 M16 7l5 5-5 5 M13.5 5l-3 14"/></svg><span>HLC</span>
+      </button>
+      <button data-layout="ide" title="IDE: папка с файлами, вкладки — пазлы и код вместе (Ctrl+3)">
+        <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3z M9 5v14 M5 8.5h2 M5 11.5h2 M5 14.5h2"/></svg><span>IDE</span>
+      </button>
+    </div>
+
     <div class="group">
-      <button data-cmd="new" class="icon-only" title="Новый проект (Ctrl+N)">
+      <button data-cmd="newDoc" class="icon-only" id="btn-new" title="Новый (Ctrl+N)">
         <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z M14 3v4h4"/></svg>
       </button>
-      <button data-cmd="open" class="icon-only" title="Открыть проект (Ctrl+O)">
+      <button data-cmd="open" class="icon-only" title="Открыть (Ctrl+O)">
         <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>
       </button>
       <button data-cmd="save" class="icon-only" title="Сохранить (Ctrl+S)">
@@ -40,6 +52,9 @@
       </button>
       <button data-cmd="debug" class="debug" id="btn-debug" title="Начать отладку / продолжить (F5)">
         <svg viewBox="0 0 24 24"><path d="M9 7a3 3 0 0 1 6 0 M7 10h10v5a5 5 0 0 1-10 0z M12 10v10 M4 13h3 M17 13h3 M5 19l2.5-2 M19 19l-2.5-2 M5 8l2.5 2 M19 8l-2.5 2"/></svg><span>Отладка</span>
+      </button>
+      <button data-cmd="flash" class="flash" id="btn-flash" title="Прошить / загрузить: команда прошивки цели (Ctrl+U)">
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4 M15 2v4 M9 18v4 M15 18v4 M2 9h4 M2 15h4 M18 9h4 M18 15h4 M12 9v5 M9.8 12l2.2 2.2 2.2-2.2"/></svg><span>Прошить</span>
       </button>
     </div>
 
@@ -76,13 +91,9 @@
     </div>
 
     <div class="group target">
-      <label title="Где выполняется программа">
+      <label title="Цель: где выполняется программа, как подключаться к плате, ограничения памяти и команды">
         <span>Цель</span>
-        <select id="target">
-          <option value="sim">Симулятор (ВМ на компьютере)</option>
-          <option value="board-host">Плата: программа с хоста</option>
-          <option value="board-flash">Плата: прошитая программа</option>
-        </select>
+        <select id="target"></select>
       </label>
       <label id="port-box" title="Последовательный порт платы">
         <select id="port"></select>
@@ -92,6 +103,10 @@
       </label>
       <button class="icon-only" id="btn-ports" title="Обновить список портов">
         <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5"/></svg>
+      </button>
+      <span class="target-link" id="tcp-box" title="Подключение по TCP — изменить в настройках цели"></span>
+      <button data-cmd="targets" class="icon-only" id="btn-targets" title="Настроить цели: плата, TCP, мост, память, прошивка">
+        <svg viewBox="0 0 24 24"><path d="M4 7h10 M18 7h2 M4 17h4 M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
       </button>
     </div>
 
@@ -108,78 +123,118 @@
   </header>
 
   <main class="layout" id="layout">
-    <section class="pane blocks-pane">
-      <div id="blockly"></div>
-    </section>
-
-    <div class="splitter vertical" data-target="right" title="Потяните, чтобы изменить размер"></div>
-
-    <section class="pane right-pane" id="right">
+    <aside class="explorer" id="explorer">
       <div class="pane-header">
-        <div class="tabs" id="code-tabs">
-          <button class="tab active" data-view="hlc" title="Код на PVM HLC, созданный из блоков">HLC</button>
-          <button class="tab" data-view="pvms" title="Ассемблер PVM (pvmcc) — после сборки">Ассемблер</button>
-          <button class="tab" data-view="lst" title="Листинг с адресами и картой памяти (pvmc -l) — после сборки">Листинг</button>
-        </div>
-        <span class="badge warn" id="code-warnings" hidden></span>
+        <span class="pane-title" id="explorer-title">Папка</span>
         <span class="spacer"></span>
-        <button class="small" id="btn-edit" title="Разрешить ручное редактирование HLC (блоки перестанут обновлять код)">
-          <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span>Править</span>
+        <button class="small icon-only" id="explorer-new-file" title="Новый файл…">
+          <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z M14 3v4h4 M12 11v6 M9 14h6"/></svg>
         </button>
-        <button class="small" id="btn-copy" title="Скопировать код">
-          <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg>
+        <button class="small icon-only" id="explorer-new-folder" title="Новая папка…">
+          <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z M12 11v6 M9 14h6"/></svg>
+        </button>
+        <button class="small icon-only" id="explorer-refresh" title="Обновить">
+          <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7 M20 4v5h-5"/></svg>
+        </button>
+        <button class="small icon-only" id="explorer-collapse" title="Свернуть всё">
+          <svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5"/></svg>
         </button>
       </div>
-      <div id="code-banner" class="banner" hidden>
-        Ручной режим: код HLC не обновляется из блоков.
-        <button class="link" id="btn-regenerate">Вернуть код из блоков</button>
+      <div class="explorer-tree" id="explorer-tree" tabindex="0"></div>
+      <div class="explorer-empty" id="explorer-empty">
+        <p>Папка не открыта.</p>
+        <button class="primary" data-cmd="openFolder">Открыть папку…</button>
+        <p class="hint">В дереве открываются проекты пазлов (.pzl), код HLC (.hlc) и любые текстовые файлы — каждый в своей вкладке.</p>
       </div>
-      <div id="code"></div>
+    </aside>
+    <div class="splitter vertical" data-target="explorer" title="Потяните, чтобы изменить размер"></div>
 
-      <div class="splitter horizontal" data-target="console" title="Потяните, чтобы изменить размер"></div>
+    <div class="workarea">
+      <nav class="doc-tabs" id="doc-tabs"></nav>
+      <div class="workarea-main">
+        <section class="pane blocks-pane">
+          <div id="blockly"></div>
+        </section>
 
-      <div class="console" id="console">
-        <div class="pane-header">
-          <div class="tabs" id="bottom-tabs">
-            <button class="tab active" data-panel="console-panel">Консоль</button>
-            <button class="tab" data-panel="debug-panel">Отладка <span class="dot" id="debug-dot" hidden></span></button>
+        <div class="splitter vertical" data-target="right" title="Потяните, чтобы изменить размер"></div>
+
+        <section class="pane right-pane" id="right">
+          <div class="pane-header">
+            <div class="tabs" id="code-tabs">
+              <button class="tab active" data-view="hlc" id="tab-hlc" title="Код на PVM HLC">HLC</button>
+              <button class="tab" data-view="pvms" title="Ассемблер PVM (pvmcc) — после сборки">Ассемблер</button>
+              <button class="tab" data-view="lst" title="Листинг с адресами и картой памяти (pvmc -l) — после сборки">Листинг</button>
+            </div>
+            <span class="badge warn" id="code-warnings" hidden></span>
+            <span class="spacer"></span>
+            <button class="small" id="btn-edit" title="Разрешить ручное редактирование HLC (блоки перестанут обновлять код)">
+              <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span>Править</span>
+            </button>
+            <button class="small" id="btn-copy" title="Скопировать код">
+              <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg>
+            </button>
           </div>
-          <span class="run-state" id="run-state"></span>
-          <span class="spacer"></span>
-          <button class="small" data-cmd="clearConsole" title="Очистить консоль">
-            <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></svg>
-          </button>
-        </div>
-        <div class="panel" id="console-panel">
-          <pre id="console-output" tabindex="0"></pre>
-        </div>
-        <div class="panel" id="debug-panel" hidden>
-          <div class="debug-empty" id="debug-empty">
-            Отладка не запущена. Нажмите <b>Отладка</b> (F5) — здесь появятся стек вызовов, переменные функций и глобальные переменные. Точки останова ставятся на блоки
-            (правый щелчок → «Точка останова» или F9) и щелчком слева от строки кода HLC.
+          <div id="code-banner" class="banner" hidden>
+            Ручной режим: код HLC не обновляется из блоков.
+            <button class="link" id="btn-regenerate">Вернуть код из блоков</button>
           </div>
-          <div class="debug-view" id="debug-view" hidden>
-            <div class="debug-where" id="debug-where"></div>
-            <div class="debug-columns">
-              <section>
-                <h4>Стек вызовов</h4>
-                <table id="debug-calls" class="calls"></table>
-                <h4 id="debug-locals-title">Переменные функции</h4>
-                <table id="debug-locals"></table>
-              </section>
-              <section>
-                <h4>Глобальные переменные</h4>
-                <table id="debug-vars"></table>
-              </section>
-              <section>
-                <h4>Стек ВМ <small>(вершина сверху)</small></h4>
-                <table id="debug-stack"></table>
-              </section>
+          <div id="code"></div>
+
+          <div class="splitter horizontal" data-target="console" title="Потяните, чтобы изменить размер"></div>
+
+          <div class="console" id="console">
+            <div class="pane-header">
+              <div class="tabs" id="bottom-tabs">
+                <button class="tab active" data-panel="console-panel">Консоль</button>
+                <button class="tab" data-panel="debug-panel">Отладка <span class="dot" id="debug-dot" hidden></span></button>
+              </div>
+              <span class="run-state" id="run-state"></span>
+              <span class="spacer"></span>
+              <button class="small" data-cmd="clearConsole" title="Очистить консоль">
+                <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></svg>
+              </button>
+            </div>
+            <div class="panel" id="console-panel">
+              <pre id="console-output" tabindex="0"></pre>
+            </div>
+            <div class="panel" id="debug-panel" hidden>
+              <div class="debug-empty" id="debug-empty">
+                Отладка не запущена. Нажмите <b>Отладка</b> (F5) — здесь появятся стек вызовов, переменные функций и глобальные переменные. Точки останова ставятся на блоки
+                (правый щелчок → «Точка останова» или F9) и щелчком слева от строки кода HLC.
+              </div>
+              <div class="debug-view" id="debug-view" hidden>
+                <div class="debug-where" id="debug-where"></div>
+                <div class="debug-columns">
+                  <section>
+                    <h4>Стек вызовов</h4>
+                    <table id="debug-calls" class="calls"></table>
+                    <h4 id="debug-locals-title">Переменные функции</h4>
+                    <table id="debug-locals"></table>
+                  </section>
+                  <section>
+                    <h4>Глобальные переменные</h4>
+                    <table id="debug-vars"></table>
+                  </section>
+                  <section>
+                    <h4>Стек ВМ <small>(вершина сверху)</small></h4>
+                    <table id="debug-stack"></table>
+                  </section>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+      </div>
+      <div class="no-doc" id="no-doc" hidden>
+        <h3>Нет открытых файлов</h3>
+        <p>Откройте файл в дереве слева или создайте новый:</p>
+        <div class="no-doc-actions">
+          <button data-cmd="new">Проект пазлов</button>
+          <button data-cmd="newHlc">Файл HLC</button>
+          <button data-cmd="open">Открыть…</button>
         </div>
       </div>
-    </section>
+    </div>
   </main>
 
   <footer class="statusbar">
@@ -187,6 +242,7 @@
     <span class="spacer"></span>
     <span id="status-memory" title="Память программы по листингу последней сборки"></span>
     <span id="status-blocks"></span>
+    <span id="status-target" title="Текущая цель"></span>
     <span id="status-tools" title="Папка утилит PVM"></span>
   </footer>
 
@@ -220,24 +276,121 @@
         <button type="button" id="settings-browse">Обзор…</button>
       </div>
       <p class="hint" id="settings-tools-status"></p>
-      <h3>Плата</h3>
+      <h3>Запуск</h3>
       <div class="field-row">
-        <label>Порт по умолчанию
-          <input name="port" placeholder="COM3" spellcheck="false">
-        </label>
-        <label>Скорость
-          <select name="baud">
-            <option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option>
-          </select>
-        </label>
         <label class="checkbox" title="Показывать трассировку каждой инструкции симулятора pvmsim">
           <input name="rawOutput" type="checkbox"> Полный вывод симулятора
         </label>
+      </div>
+      <p class="hint">Порт, скорость, TCP, мост, ограничения памяти и команды прошивки настраиваются в целях:
+        <button type="button" class="link" id="settings-targets">Сборка → Цели…</button></p>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button value="cancel">Отмена</button>
+        <button value="ok" class="primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="targets-dialog" class="wide">
+    <form method="dialog" id="targets-form">
+      <h2>Цели</h2>
+      <p class="hint">Цель — где выполняется программа и как к ней подключаться. Встроенные цели можно менять, к ним — добавлять свои
+        (плата по TCP, утилита-мост, своя команда прошивки).</p>
+      <div class="targets-body">
+        <div class="targets-list-box">
+          <ul class="targets-list" id="targets-list"></ul>
+          <div class="targets-list-actions">
+            <button type="button" class="small" id="target-add" title="Новая цель">＋ Новая</button>
+            <button type="button" class="small" id="target-copy" title="Копия выбранной цели">Копия</button>
+            <button type="button" class="small danger" id="target-delete" title="Удалить выбранную цель">Удалить</button>
+          </div>
+        </div>
+        <div class="targets-form" id="target-fields">
+          <div class="field-row">
+            <label class="grow">Название <input name="name" spellcheck="false"></label>
+            <label>Режим
+              <select name="mode">
+                <option value="sim">Симулятор (ВМ на компьютере)</option>
+                <option value="board-host">Плата: программа с хоста</option>
+                <option value="board-flash">Плата: прошитая программа</option>
+              </select>
+            </label>
+          </div>
+          <fieldset data-board>
+            <legend>Подключение к плате</legend>
+            <div class="field-row">
+              <label>Через
+                <select name="connection">
+                  <option value="serial">Последовательный порт</option>
+                  <option value="tcp">TCP (мост, pvmboard)</option>
+                </select>
+              </label>
+              <label data-serial>Порт <input name="port" placeholder="COM3" spellcheck="false" list="targets-ports"></label>
+              <label data-serial>Скорость
+                <select name="baud"><option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select>
+              </label>
+              <label data-tcp class="grow">Адрес TCP <input name="tcp" placeholder="127.0.0.1:5555 или только порт" spellcheck="false"></label>
+            </div>
+            <datalist id="targets-ports"></datalist>
+            <label class="block">Мост — команда, которая запускается перед подключением и завершается после
+              <input name="bridge" class="mono" placeholder="например: ser2tcp --port ${port} --baud ${baud} --listen ${tcpPort}" spellcheck="false">
+            </label>
+            <div class="field-row">
+              <label class="grow">Мост готов, когда в его выводе есть (рег. выражение)
+                <input name="bridgeReady" class="mono" placeholder="например: listening" spellcheck="false">
+              </label>
+              <label>…или через, мс <input name="bridgeDelay" type="number" min="0" step="100"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Ограничения памяти (сборка)</legend>
+            <div class="field-row">
+              <label>Код, байт <input name="limit-code" type="number" min="1" max="65535"></label>
+              <label>RAM, слов <input name="limit-ram" type="number" min="1" max="16384"></label>
+              <label>Стек, слов <input name="limit-stack" type="number" min="1" max="32767"></label>
+            </div>
+            <p class="hint">Добавляются в сборку как <code>section code/ram/stack</code>: программа, которая не помещается, не соберётся.
+              Пусто — размер по умолчанию PVM; блок «память» в проекте важнее. Симулятор получает те же стек и RAM.</p>
+          </fieldset>
+          <fieldset>
+            <legend>Команды</legend>
+            <label class="block">Прошить / загрузить (Ctrl+U)
+              <input name="flash" class="mono" placeholder='например: STM32_Programmer_CLI -c port=SWD -w "${hex}" -v -rst' spellcheck="false">
+            </label>
+            <label class="block">Запустить — своя команда вместо встроенного запуска (необязательно)
+              <input name="run" class="mono" placeholder='например: "${pvmsim}" "${bin}" --steps 1000000' spellcheck="false">
+            </label>
+            <label class="block">Переменные окружения для команд — строки ИМЯ=значение
+              <textarea name="env" class="mono" rows="2" placeholder="FIRMWARE=${workspaceFolder}/firmware" spellcheck="false"></textarea>
+            </label>
+          </fieldset>
+          <details class="vars-help">
+            <summary>Переменные PazzleIDE для команд</summary>
+            <p class="hint">В командах пишите <code>${имя}</code>, пути с пробелами берите в кавычки: <code>"${hex}"</code>.
+              Те же значения процесс получает в окружении (<code>PAZZLE_HEX</code> и т. д.), системные переменные — <code>${env:ИМЯ}</code>.
+              Щелчок по имени вставляет его в поле, где стоит курсор.</p>
+            <table id="targets-vars"></table>
+          </details>
+        </div>
       </div>
       <div class="dialog-actions">
         <span class="spacer"></span>
         <button value="cancel">Отмена</button>
         <button value="ok" class="primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="prompt-dialog">
+    <form method="dialog" id="prompt-form">
+      <h2 id="prompt-title"></h2>
+      <p class="hint" id="prompt-hint"></p>
+      <div id="prompt-fields" class="prompt-fields"></div>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button value="cancel" formnovalidate>Отмена</button>
+        <button value="ok" class="primary" id="prompt-ok">OK</button>
       </div>
     </form>
   </dialog>

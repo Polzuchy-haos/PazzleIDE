@@ -51,6 +51,7 @@ export const BASE_CATEGORIES = [
   {kind: 'sep'},
   {kind: 'category', name: 'Переменные', categorystyle: 'variable_category', custom: 'VARIABLE'},
   {kind: 'category', name: 'Функции', categorystyle: 'procedure_category', custom: 'PROCEDURE'},
+  {kind: 'category', name: 'Библиотеки', colour: '#8e6bd8', custom: 'PAZZLE_LIBRARIES'},
   {
     kind: 'category',
     name: 'Код',

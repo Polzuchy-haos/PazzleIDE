@@ -39,7 +39,7 @@ const icon = (path) =>
   'data:image/svg+xml,' +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">` +
-      `<circle cx="8" cy="8" r="7.5" fill="#fff" fill-opacity="0.28"/>` +
+      `<circle cx="8" cy="8" r="7.5" fill="#fff" fill-opacity="0.35"/>` +
       `<path d="${path}" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`,
   );
 const PLUS_ICON = icon('M8 4.5v7M4.5 8h7');
@@ -82,8 +82,8 @@ const VARIADIC_MIXIN = {
     this.argCount_ = n;
     const buttons = this.appendDummyInput('BUTTONS');
     const click = (delta) => (field) => field.getSourceBlock()?.changeArgCount_(delta);
-    if (n > 0) buttons.appendField(new Blockly.FieldImage(MINUS_ICON, 16, 16, '−', click(-1)), 'MINUS');
-    if (n < VARIADIC_MAX_ARGS) buttons.appendField(new Blockly.FieldImage(PLUS_ICON, 16, 16, '+', click(1)), 'PLUS');
+    if (n > 0) buttons.appendField(new Blockly.FieldImage(MINUS_ICON, 18, 18, '−', click(-1)), 'MINUS');
+    if (n < VARIADIC_MAX_ARGS) buttons.appendField(new Blockly.FieldImage(PLUS_ICON, 18, 18, '+', click(1)), 'PLUS');
   },
 
   /** Щелчок по «−»/«+»: одно действие для «Отменить», вместе с отцеплённым блоком последнего входа. */

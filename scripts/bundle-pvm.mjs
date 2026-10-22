@@ -56,6 +56,8 @@ const tools = {
   pvmdbg: 'debugger',
   pvminit: 'pvminit',
 };
+// Необязательные: pvmboard — «плата-процесс» по TCP, чтобы проверять цели с TCP и мостом без железа.
+const optional = {pvmboard: 'debugger'};
 
 fs.rmSync(out, {recursive: true, force: true});
 fs.mkdirSync(out, {recursive: true});
@@ -66,6 +68,11 @@ for (const [tool, dir] of Object.entries(tools)) {
     process.exit(1);
   }
   fs.copyFileSync(from, path.join(out, exe(tool)));
+}
+for (const [tool, dir] of Object.entries(optional)) {
+  const from = path.join(buildDir, dir, exe(tool));
+  if (fs.existsSync(from)) fs.copyFileSync(from, path.join(out, exe(tool)));
+  else console.warn(`Нет ${from} — ${tool} не войдёт в дистрибутив`);
 }
 // lib/ рядом с pvmcc: там import ищет mathlib, time и т.п.
 fs.cpSync(path.join(src, 'lib'), path.join(out, 'lib'), {recursive: true});

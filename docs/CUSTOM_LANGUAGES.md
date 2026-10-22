@@ -154,6 +154,18 @@ node src/cli/pazzle.mjs hlc examples/02-faktorial.pzl
 `{{COUNT}}`. Ещё есть `empty` (нет элементов), `single` (ровно один элемент) и `skipEmpty` (пропускать пустые входы).
 Так же описываются вызовы функций: `{"repeat": "ARG", "template": "{{NAME}}({{ITEMS}})"}`.
 
+Свой блок с переменным числом аргументов получает кнопки «−» и «+» мутатором `pazzle_variadic_args`
+(входы `ARG0…ARGn`, до 8, число хранится в `extraState: {"args": n}`). Так устроен `svc`:
+
+```json
+"customBlocks": [{"type": "pvm_svc", "message0": "svc № %1", "args0": [{"type": "field_number", "name": "N"}],
+                  "mutator": "pazzle_variadic_args", "inputsInline": true, "previousStatement": null, "nextStatement": null}],
+"blocks": {"pvm_svc": {"repeat": "ARG", "template": "svc({{N}}, {{ITEMS}});", "empty": "svc({{N}});"}}
+```
+
+Пустой вход даёт значение по умолчанию (`0`), так что позиции аргументов не сдвигаются. В палитре число
+аргументов задаётся так: `{"kind": "block", "type": "pvm_svc", "extraState": {"args": 1}, "inputs": {"ARG0": …}}`.
+
 ### Условие «если — иначе если — иначе»
 
 ```json

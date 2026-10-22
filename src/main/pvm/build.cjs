@@ -45,10 +45,49 @@ function parseErrors(text) {
 }
 
 /**
- * Собирает программу в buildDir. Возвращает
- * {ok, dir, files: {hlc, pvms, bin, lst, map, hex, carray}, errors, stack, listing}.
+ * Ограничения памяти цели (код, RAM, стек) -> объявления section в конце кода:
+ * номера строк не сдвигаются. Секцию, которую код объявляет сам, не трогаем —
+ * его объявление важнее (в HLC каждая секция объявляется не больше одного раза).
+ * Возвращает {code, applied: {вид: размер}, own: [виды, объявленные в коде]}.
  */
-async function buildProgram({code, buildDir, tools, name = 'main', onOutput}) {
+function applyLimits(code, limits = {}) {
+  const applied = {};
+  const own = [];
+  const lines = [];
+  for (const kind of ['code', 'ram', 'stack']) {
+    const value = limits?.[kind];
+    if (!value) continue;
+    if (new RegExp(`^\\s*section\\s+${kind}\\b`, 'm').test(code)) {
+      own.push(kind);
+      continue;
+    }
+    applied[kind] = value;
+    lines.push(`section ${kind} ${value};`);
+  }
+  if (!lines.length) return {code, applied, own};
+  const text = code.replace(/\n*$/, '\n') + '\n// Ограничения памяти цели (PazzleIDE)\n' + lines.join('\n') + '\n';
+  return {code: text, applied, own};
+}
+
+/**
+ * Путь для -I относительно папки сборки (обычно «..»: она лежит рядом с исходником).
+ * Утилиты PVM на Windows не понимают не-ASCII в аргументах (pvmcc: «Cannot convert
+ * character sequence»), поэтому путь с кириллицей не передаётся вовсе.
+ */
+function includeArg(buildDir, dir) {
+  if (!dir) return null;
+  const ascii = (p) => /^[\x20-\x7e]*$/.test(p);
+  const rel = path.relative(buildDir, dir) || '.';
+  if (ascii(rel)) return rel;
+  return ascii(dir) ? dir : null;
+}
+
+/**
+ * Собирает программу в buildDir. Возвращает
+ * {ok, dir, files: {hlc, pvms, bin, lst, map, hex, carray}, errors, stack, listing, limits}.
+ * limits — ограничения памяти цели, includeDirs — где ещё искать import (папка исходника).
+ */
+async function buildProgram({code, buildDir, tools, name = 'main', limits, includeDirs = [], onOutput}) {
   fs.mkdirSync(buildDir, {recursive: true});
   const files = {
     hlc: path.join(buildDir, `${name}.hlc`),
@@ -60,13 +99,16 @@ async function buildProgram({code, buildDir, tools, name = 'main', onOutput}) {
     carray: path.join(buildDir, `${name}.c`),
   };
   for (const f of [files.pvms, files.bin, files.lst, files.map, files.hex, files.carray]) fs.rmSync(f, {force: true});
-  fs.writeFileSync(files.hlc, code, 'utf8');
+  const limited = applyLimits(code, limits);
+  fs.writeFileSync(files.hlc, limited.code, 'utf8');
 
-  const fail = (stage, r) => ({ok: false, stage, dir: buildDir, files, errors: parseErrors(r.stderr + '\n' + r.stdout), log: r.stderr || r.stdout});
+  const fail = (stage, r) => ({ok: false, stage, dir: buildDir, files, limits: {applied: limited.applied, own: limited.own}, errors: parseErrors(r.stderr + '\n' + r.stdout), log: r.stderr || r.stdout});
   const opts = {cwd: buildDir, onOutput};
 
   // Имена файлов — относительные: так карта отладки ссылается на «main.hlc».
-  let r = await runTool(tools.found.pvmcc, [`${name}.hlc`, '-o', `${name}.pvms`], opts);
+  // -I: import ищется и рядом с исходным файлом, а не только рядом с копией в папке сборки.
+  const includes = includeDirs.map((dir) => includeArg(buildDir, dir)).filter(Boolean).flatMap((dir) => ['-I', dir]);
+  let r = await runTool(tools.found.pvmcc, [`${name}.hlc`, '-o', `${name}.pvms`, ...includes], opts);
   if (r.code !== 0) return fail('pvmcc', r);
   const stack = /stack:\s*(.+)$/m.exec(r.stdout)?.[1]?.trim() || null;
 
@@ -88,7 +130,8 @@ async function buildProgram({code, buildDir, tools, name = 'main', onOutput}) {
     functions: listing.functions,
     variables: listing.variables,
     size: fs.statSync(files.bin).size,
+    limits: {applied: limited.applied, own: limited.own},
   };
 }
 
-module.exports = {buildProgram, runTool, parseErrors};
+module.exports = {buildProgram, runTool, parseErrors, applyLimits};

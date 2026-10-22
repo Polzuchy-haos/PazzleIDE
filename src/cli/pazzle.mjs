@@ -14,10 +14,11 @@ const USAGE = `PazzleIDE CLI (PVM)
 
   pazzle hlc   <проект.pzl> [-o файл.hlc]           код PVM HLC из блоков (по умолчанию — в stdout)
   pazzle build <проект.pzl> [-o папка]              собрать: hlc, pvms, bin, hex, C-массив, листинг, карта отладки
-  pazzle run   <проект.pzl> [--port COM3] [--baud 9600]
-                                                  собрать и выполнить: в симуляторе, а с --port — на плате
-                                                  (программа с хоста, pvmdbg --host)
+  pazzle run   <проект.pzl> [--port COM3] [--baud 9600] [--tcp host:port]
+                                                  собрать и выполнить: в симуляторе, а с --port или --tcp —
+                                                  на плате (программа с хоста, pvmdbg --host)
 
+  --code N --ram N --stack N   ограничения памяти: код (байт), RAM и стек (слов) — как в цели IDE
   --tools <папка>   утилиты PVM (иначе PVM_HOME, ../pvm/Release, PATH)
   --raw             не фильтровать вывод симулятора
 `;
@@ -30,6 +31,8 @@ function parseArgs(argv) {
     else if (a === '--tools') args.tools = argv[++i];
     else if (a === '--port') args.port = argv[++i];
     else if (a === '--baud') args.baud = Number(argv[++i]);
+    else if (a === '--tcp') args.tcp = argv[++i];
+    else if (a === '--code' || a === '--ram' || a === '--stack') (args.limits ??= {})[a.slice(2)] = Number(argv[++i]);
     else if (a === '--raw') args.raw = true;
     else if (a === '-h' || a === '--help') args.help = true;
     else args._.push(a);
@@ -75,14 +78,14 @@ async function main() {
   if (!tools.dir) fail('Утилиты PVM не найдены: укажите --tools <папка Release> или переменную PVM_HOME');
 
   const buildDir = path.resolve(args.out || path.join(path.dirname(file), path.parse(file).name + '.build'));
-  const result = await buildProgram({code, buildDir, tools, onOutput: ({stream, text}) => process.stderr.write(stream === 'stdout' ? text : text)});
+  const result = await buildProgram({code, buildDir, tools, limits: args.limits, onOutput: ({stream, text}) => process.stderr.write(stream === 'stdout' ? text : text)});
   if (!result.ok) fail(`Сборка не удалась (${result.stage})`);
   process.stderr.write(`Собрано в ${buildDir}\n`);
   if (command === 'build') return;
 
-  if (args.port) {
+  if (args.port || args.tcp) {
     const {DebugSession} = require('../main/pvm/debug.cjs');
-    const s = new DebugSession({target: 'board-host', pvmdbg: tools.found.pvmdbg, files: result.files, port: args.port, baud: args.baud || 9600});
+    const s = new DebugSession({target: 'board-host', pvmdbg: tools.found.pvmdbg, files: result.files, port: args.port, baud: args.baud || 9600, link: args.tcp ? ['--tcp', args.tcp] : undefined});
     s.on('output', ({text}) => process.stdout.write(text));
     s.on('state', async (st) => {
       if (st.status !== 'stopped' || st.reason === 'entry') return;
@@ -104,7 +107,8 @@ async function main() {
   const {spawn} = await import('node:child_process');
   const {createLineFilter} = require('../main/runner.cjs');
   const filter = args.raw ? null : createLineFilter(pack.outputFilter);
-  const child = spawn(tools.found.pvmsim, [result.files.bin], {cwd: buildDir});
+  const sizes = ['stack', 'ram'].flatMap((k) => (args.limits?.[k] ? [`--${k}`, String(args.limits[k])] : []));
+  const child = spawn(tools.found.pvmsim, [result.files.bin, ...sizes], {cwd: buildDir});
   child.stdout.on('data', (d) => process.stdout.write(filter ? filter.push(d.toString()) : d));
   child.stderr.on('data', (d) => process.stderr.write(d));
   child.on('close', (c) => {

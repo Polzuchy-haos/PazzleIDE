@@ -1,14 +1,13 @@
-// Диалог настроек: внешний вид, папка утилит PVM, плата.
+// Диалог настроек: внешний вид, папка утилит PVM, вывод симулятора.
+// Порт, TCP, мост, память и команды — в целях (targets-dialog.js).
 
-export function openSettingsDialog({settings, tools, chooseFolder, onSave}) {
+export function openSettingsDialog({settings, tools, chooseFolder, onSave, onTargets}) {
   const dialog = document.getElementById('settings-dialog');
   const form = document.getElementById('settings-form');
   form.theme.value = settings.theme;
   form.renderer.value = settings.renderer;
   form.fontSize.value = settings.fontSize;
   form.pvmTools.value = settings.pvmTools || '';
-  form.port.value = settings.port || '';
-  form.baud.value = String(settings.baud || 9600);
   form.rawOutput.checked = !!settings.rawOutput;
 
   const status = document.getElementById('settings-tools-status');
@@ -20,6 +19,13 @@ export function openSettingsDialog({settings, tools, chooseFolder, onSave}) {
     const dir = await chooseFolder();
     if (dir) form.pvmTools.value = dir;
   };
+  document.getElementById('settings-targets').onclick = () => {
+    dialog.close('cancel');
+    onTargets?.();
+  };
+  form.onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault();
+  };
 
   dialog.onclose = () => {
     if (dialog.returnValue !== 'ok') return;
@@ -28,8 +34,6 @@ export function openSettingsDialog({settings, tools, chooseFolder, onSave}) {
       renderer: form.renderer.value,
       fontSize: Math.min(28, Math.max(10, Number(form.fontSize.value) || 14)),
       pvmTools: form.pvmTools.value.trim(),
-      port: form.port.value.trim() || 'COM3',
-      baud: Number(form.baud.value) || 9600,
       rawOutput: form.rawOutput.checked,
     });
   };

@@ -15,12 +15,14 @@ import {
   validatePack,
   extractBlockMarkers,
   parseProject,
+  library,
 } from '../src/core/index.js';
 
 const require = createRequire(import.meta.url);
 const {SourceMap, parseListing} = require('../src/main/pvm/artifacts.cjs');
 const {createLineFilter} = require('../src/main/runner.cjs');
-const {parseErrors} = require('../src/main/pvm/build.cjs');
+const {parseErrors, applyLimits} = require('../src/main/pvm/build.cjs');
+const targets = require('../src/main/targets.cjs');
 const {HostCliDriver} = require('../src/main/pvm/debug.cjs');
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -335,6 +337,115 @@ describe('язык PVM HLC', () => {
   test('имена: HLC -> блоки', () => {
     const ws = load({variables: [{id: 'v', name: 'счёт'}], blocks: {blocks: [{type: 'math_change', fields: {VAR: {id: 'v'}}}]}});
     assert.deepEqual(generateCode(pvm, ws).names, {schyot: 'счёт'});
+  });
+});
+
+describe('библиотеки пазлов', () => {
+  const n = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+  // Функция «удвоить» вызывает «сложить» и использует константу ШАГ; переменная x — параметр.
+  const source = () =>
+    load({
+      variables: [{id: 'vx', name: 'x'}, {id: 'va', name: 'a'}, {id: 'vb', name: 'b'}],
+      blocks: {
+        blocks: [
+          {type: 'pvm_const_define', fields: {NAME: 'ШАГ'}, inputs: {VALUE: n(2)}},
+          {
+            type: 'procedures_defreturn',
+            fields: {NAME: 'сложить'},
+            extraState: {params: [{name: 'a', id: 'va'}, {name: 'b', id: 'vb'}]},
+            inputs: {RETURN: {block: {type: 'math_arithmetic', fields: {OP: 'ADD'}, inputs: {A: {block: {type: 'variables_get', fields: {VAR: {id: 'va'}}}}, B: {block: {type: 'variables_get', fields: {VAR: {id: 'vb'}}}}}}}},
+          },
+          {
+            type: 'procedures_defreturn',
+            fields: {NAME: 'удвоить'},
+            extraState: {params: [{name: 'x', id: 'vx'}]},
+            inputs: {
+              RETURN: {
+                block: {
+                  type: 'procedures_callreturn',
+                  extraState: {name: 'сложить', params: ['a', 'b']},
+                  inputs: {ARG0: {block: {type: 'variables_get', fields: {VAR: {id: 'vx'}}}}, ARG1: {block: {type: 'pvm_const_get', fields: {NAME: 'ШАГ'}}}},
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+  test('функция сохраняется вместе с вызываемыми функциями и константами, без id', () => {
+    const ws = source();
+    const def = ws.getTopBlocks(false).find((b) => b.getFieldValue('NAME') === 'удвоить');
+    const items = library.collectItems(ws, def);
+    assert.deepEqual(items.map((i) => `${i.kind}:${i.name}`), ['function:удвоить', 'function:сложить', 'constant:ШАГ']);
+    const text = JSON.stringify(items);
+    assert.ok(!/"id"/.test(text), 'в библиотеке нет id блоков и переменных');
+    assert.match(text, /"VAR":\{"name":"x"\}/);
+  });
+
+  test('блок из палитры библиотеки подтягивает зависимости в проект', () => {
+    const lib = {...library.newLibrary('Математика'), file: 'math.pzlib'};
+    lib.items = library.collectItems(source(), source().getTopBlocks(false).find((b) => b.getFieldValue('NAME') === 'удвоить'));
+    const ws = load({blocks: {blocks: [{type: 'pvm_start'}]}});
+    // Как из палитры: вызов «удвоить» с меткой библиотеки.
+    const call = library.flyoutBlockFor(lib.items[0], library.libraryData(lib, lib.items[0]));
+    const {kind: _kind, ...state} = call;
+    ws.getTopBlocks(false)[0].nextConnection.connect(
+      Blockly.serialization.blocks.append({type: 'text_print', inputs: {TEXT: {block: state}}}, ws).previousConnection,
+    );
+    const printed = ws.getBlocksByType('text_print', false)[0];
+    const wanted = library.libraryDropsIn([printed.getInputTargetBlock('TEXT')]);
+    assert.equal(printed.getInputTargetBlock('TEXT').data, null, 'метка снята');
+    const plan = library.planImport(ws, [lib], wanted);
+    assert.deepEqual(plan.map((p) => p.item.name), ['удвоить', 'сложить', 'ШАГ']);
+    library.appendItems(ws, plan.map((p) => p.item));
+    const {code} = generateCode(pvm, ws);
+    assert.match(code, /const int SHAG = 2;/);
+    assert.match(code, /int slozhit\(int a, int b\)/);
+    assert.match(code, /return slozhit\(x, SHAG\);/);
+    assert.match(code, /OUT = udvoit\(0\);/);
+    // Повторно ничего не добавляется: всё уже в проекте.
+    assert.equal(library.planImport(ws, [lib], {functions: ['удвоить'], constants: []}).length, 0);
+  });
+
+  test('элементы с тем же именем заменяются', () => {
+    const lib = library.newLibrary('L');
+    const a = library.mergeItems(lib, [{kind: 'function', name: 'f', block: {type: 'x'}}]);
+    const b = library.mergeItems(a.library, [{kind: 'function', name: 'f', block: {type: 'y'}}, {kind: 'constant', name: 'f', block: {type: 'z'}}]);
+    assert.equal(b.replaced, 1);
+    assert.equal(b.added, 1);
+    assert.deepEqual(b.library.items.map((i) => i.block.type), ['y', 'z']);
+  });
+});
+
+describe('цели и ограничения памяти', () => {
+  test('ограничения дописываются в конец кода, кроме объявленных в коде', () => {
+    const r = applyLimits('section ram 32;\nvoid main() {\n}\n', {code: 4096, ram: 16, stack: 128});
+    assert.deepEqual(r.applied, {code: 4096, stack: 128});
+    assert.deepEqual(r.own, ['ram']);
+    assert.ok(r.code.startsWith('section ram 32;\nvoid main() {\n}\n'), 'строки кода не сдвигаются');
+    assert.match(r.code, /section code 4096;\nsection stack 128;\n$/);
+    assert.equal(applyLimits('x\n', {}).code, 'x\n');
+  });
+
+  test('переменные ${...} и окружение PAZZLE_*', () => {
+    const target = targets.normalizeTarget({name: 'Моя плата', mode: 'board-flash', connection: 'tcp', tcp: '10.0.0.5:5555', limits: {ram: '128'}, env: 'FW=${buildDir}/fw'});
+    const vars = targets.targetVariables({target, files: {bin: '/p/a.build/main.bin', hex: '/p/a.build/main.hex'}, projectPath: '/p/a.pzl'});
+    assert.equal(targets.expandVariables('flash "${hex}" ${tcpHost} ${tcpPort} ${ramSize} ${нет} ${env:PZ_T}', vars, {PZ_T: 'ok'}), 'flash "/p/a.build/main.hex" 10.0.0.5 5555 128 ${нет} ok');
+    const env = targets.commandEnv(vars, target.env, {});
+    assert.equal(env.PAZZLE_HEX, '/p/a.build/main.hex');
+    assert.equal(env.PAZZLE_PROJECT_NAME, 'a');
+    assert.equal(env.FW, '/p/a.build/fw');
+    assert.deepEqual(targets.pvmdbgLink(target), ['--tcp', '10.0.0.5:5555']);
+    assert.deepEqual(targets.splitTcp('5555'), ['127.0.0.1', '5555']);
+  });
+
+  test('встроенные цели по умолчанию — с портом и скоростью из старых настроек', () => {
+    const list = targets.normalizeTargets(null, {port: 'COM7', baud: 115200});
+    assert.deepEqual(list.map((t) => t.id), ['sim', 'board-host', 'board-flash']);
+    assert.equal(list[1].port, 'COM7');
+    assert.equal(list[1].baud, 115200);
+    assert.deepEqual(list[0].limits, {code: null, ram: null, stack: null});
   });
 });
 

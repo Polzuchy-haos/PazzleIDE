@@ -6,6 +6,7 @@ const path = require('path');
 const isWin = process.platform === 'win32';
 const exe = (name) => (isWin ? name + '.exe' : name);
 const TOOLS = ['pvmcc', 'pvmc', 'pvmsim', 'pvmdbg', 'pvminit', 'pvmdisasm'];
+const OPTIONAL_TOOLS = ['pvmboard']; // есть не в каждой сборке PVM; отсутствие — не ошибка
 
 function hasCompiler(dir) {
   return !!dir && fs.existsSync(path.join(dir, exe('pvmcc'))) && fs.existsSync(path.join(dir, exe('pvmc')));
@@ -43,6 +44,10 @@ function describe(dir, source) {
     const p = path.join(dir, exe(t));
     if (fs.existsSync(p)) found[t] = p;
     else missing.push(t);
+  }
+  for (const t of OPTIONAL_TOOLS) {
+    const p = path.join(dir, exe(t));
+    if (fs.existsSync(p)) found[t] = p;
   }
   return {dir, source, found, missing};
 }

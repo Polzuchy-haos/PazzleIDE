@@ -5,3 +5,4 @@ export {serializeProject, parseProject, loadProjectInto, PROJECT_FORMAT} from '.
 export {validatePack, extractBlockMarkers} from './generators/template.js';
 export {inferTypes} from './types.js';
 export {transliterate, toIdentifier} from './translit.js';
+export * as library from './library.js';

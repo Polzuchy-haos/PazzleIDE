@@ -76,3 +76,10 @@ import '../../node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/s
 import '../../node_modules/monaco-editor/esm/vs/editor/common/standaloneStrings.js';
 import '../../node_modules/monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon-modifiers.css';
 import '../../node_modules/monaco-editor/esm/vs/languages/definitions/cpp/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/markdown/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/ini/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/shell/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/bat/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/yaml/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/javascript/register.js';
+import '../../node_modules/monaco-editor/esm/vs/languages/definitions/python/register.js';
