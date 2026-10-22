@@ -349,9 +349,11 @@
               <label>Код, байт <input name="limit-code" type="number" min="1" max="65535"></label>
               <label>RAM, слов <input name="limit-ram" type="number" min="1" max="16384"></label>
               <label>Стек, слов <input name="limit-stack" type="number" min="1" max="32767"></label>
+              <button type="button" class="small limits-reset" id="target-limits-factory" title="Код 1024 байт, RAM 64 и стек 64 слова">Заводские значения</button>
             </div>
             <p class="hint">Добавляются в сборку как <code>section code/ram/stack</code>: программа, которая не помещается, не соберётся.
-              Пусто — размер по умолчанию PVM; блок «память» в проекте важнее. Симулятор получает те же стек и RAM.</p>
+              Заводские значения — код 1024 байт, RAM и стек по 64 слова; пустое поле — размер по умолчанию самой PVM.
+              Блок «память» в проекте важнее. Симулятор получает те же стек и RAM.</p>
           </fieldset>
           <fieldset>
             <legend>Команды</legend>

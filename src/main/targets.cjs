@@ -12,6 +12,9 @@ const LIMIT_KINDS = ['code', 'ram', 'stack'];
 /** Размеры по умолчанию (pvm/pvm.h и ассемблер pvmc), если в цели и в коде не заданы. */
 const PVM_DEFAULT_LIMITS = {code: 65535, ram: 64, stack: 1024};
 
+/** Заводские ограничения встроенных и новых целей: небольшая плата — код 1 КБ, RAM и стек по 64 слова. */
+const FACTORY_LIMITS = {code: 1024, ram: 64, stack: 64};
+
 const BLANK = {
   id: '',
   name: '',
@@ -30,9 +33,9 @@ const BLANK = {
 };
 
 const DEFAULT_TARGETS = [
-  {id: 'sim', name: 'Симулятор (ВМ на компьютере)', mode: 'sim'},
-  {id: 'board-host', name: 'Плата: программа с хоста', mode: 'board-host'},
-  {id: 'board-flash', name: 'Плата: прошитая программа', mode: 'board-flash'},
+  {id: 'sim', name: 'Симулятор (ВМ на компьютере)', mode: 'sim', limits: FACTORY_LIMITS},
+  {id: 'board-host', name: 'Плата: программа с хоста', mode: 'board-host', limits: FACTORY_LIMITS},
+  {id: 'board-flash', name: 'Плата: прошитая программа', mode: 'board-flash', limits: FACTORY_LIMITS},
 ];
 
 const positive = (v) => {
@@ -52,6 +55,17 @@ function normalizeTarget(raw, index = 0) {
   t.limits = Object.fromEntries(LIMIT_KINDS.map((k) => [k, positive(limits[k])]));
   for (const k of ['port', 'tcp', 'bridge', 'bridgeReady', 'flash', 'run', 'env']) t[k] = String(t[k] ?? '').trim();
   return t;
+}
+
+/**
+ * Встроенные цели, сохранённые до появления заводских ограничений (все поля пустые), получают
+ * заводские значения — один раз, при переходе настроек на limitsVersion 1.
+ */
+function applyFactoryLimits(list) {
+  const builtIn = new Set(DEFAULT_TARGETS.map((t) => t.id));
+  return list.map((t) =>
+    builtIn.has(t.id) && LIMIT_KINDS.every((k) => !t.limits?.[k]) ? normalizeTarget({...t, limits: FACTORY_LIMITS}) : t,
+  );
 }
 
 /** Список целей из настроек; при первом запуске — встроенные с портом и скоростью из старых настроек. */
@@ -323,7 +337,9 @@ module.exports = {
   MODES,
   LIMIT_KINDS,
   PVM_DEFAULT_LIMITS,
+  FACTORY_LIMITS,
   DEFAULT_TARGETS,
+  applyFactoryLimits,
   VARIABLES,
   normalizeTarget,
   normalizeTargets,

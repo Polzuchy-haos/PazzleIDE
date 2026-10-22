@@ -347,6 +347,7 @@ function registerIpc() {
   ipcMain.handle('targets:info', () => ({
     variables: targets.VARIABLES.map(([name, description]) => ({name, description, env: targets.envName(name)})),
     defaults: targets.PVM_DEFAULT_LIMITS,
+    factory: targets.FACTORY_LIMITS,
   }));
 
   ipcMain.handle('examples:list', () => listExamples());

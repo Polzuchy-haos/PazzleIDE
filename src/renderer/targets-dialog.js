@@ -36,9 +36,15 @@ export function openTargetsDialog({targets, current, info, ports = [], focus, on
     vars.append(tr);
   }
   const defaults = info?.defaults || {};
-  el('limit-code').placeholder = `${defaults.code ?? ''} (по умолч.)`;
-  el('limit-ram').placeholder = `${defaults.ram ?? ''} (по умолч.)`;
-  el('limit-stack').placeholder = `${defaults.stack ?? ''} (по умолч.)`;
+  const factory = info?.factory || {code: 1024, ram: 64, stack: 64};
+  el('limit-code').placeholder = `PVM: ${defaults.code ?? ''}`;
+  el('limit-ram').placeholder = `PVM: ${defaults.ram ?? ''}`;
+  el('limit-stack').placeholder = `PVM: ${defaults.stack ?? ''}`;
+  document.getElementById('target-limits-factory').onclick = () => {
+    for (const k of ['code', 'ram', 'stack']) el(`limit-${k}`).value = factory[k];
+    readForm();
+    renderList();
+  };
 
   function insertVariable(name) {
     const field = lastField || el('flash');
@@ -113,7 +119,7 @@ export function openTargetsDialog({targets, current, info, ports = [], focus, on
 
   document.getElementById('target-add').onclick = () => {
     readForm();
-    work.push({...structuredClone(work[selected]), id: newId(), name: 'Новая цель', mode: 'board-flash', flash: '', run: '', bridge: '', bridgeReady: ''});
+    work.push({...structuredClone(work[selected]), id: newId(), name: 'Новая цель', mode: 'board-flash', flash: '', run: '', bridge: '', bridgeReady: '', limits: {...factory}});
     selected = work.length - 1;
     renderList();
     fillForm();

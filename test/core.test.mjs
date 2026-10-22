@@ -445,7 +445,14 @@ describe('цели и ограничения памяти', () => {
     assert.deepEqual(list.map((t) => t.id), ['sim', 'board-host', 'board-flash']);
     assert.equal(list[1].port, 'COM7');
     assert.equal(list[1].baud, 115200);
-    assert.deepEqual(list[0].limits, {code: null, ram: null, stack: null});
+    assert.deepEqual(list[0].limits, {code: 1024, ram: 64, stack: 64}); // заводские значения
+    // Встроенные цели из настроек до заводских значений получают их; заданные пользователем — не трогаются.
+    const old = targets.applyFactoryLimits([
+      targets.normalizeTarget({id: 'sim', mode: 'sim'}),
+      targets.normalizeTarget({id: 'board-host', mode: 'board-host', limits: {ram: 128}}),
+      targets.normalizeTarget({id: 'mine', mode: 'board-flash'}),
+    ]);
+    assert.deepEqual(old.map((t) => t.limits), [{code: 1024, ram: 64, stack: 64}, {code: null, ram: 128, stack: null}, {code: null, ram: null, stack: null}]);
   });
 });
 

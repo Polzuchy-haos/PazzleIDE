@@ -2,7 +2,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const {normalizeTargets} = require('./targets.cjs');
+const {normalizeTargets, applyFactoryLimits} = require('./targets.cjs');
 
 const DEFAULTS = {
   theme: 'dark', // dark | light
@@ -11,6 +11,7 @@ const DEFAULTS = {
   pvmTools: '', // папка с pvmcc, pvmc, pvmsim, pvmdbg (пусто — искать автоматически)
   target: 'sim', // id текущей цели
   targets: null, // список целей (src/main/targets.cjs); null — встроенные
+  limitsVersion: 1, // 1 — у встроенных целей заводские ограничения памяти (см. applyFactoryLimits)
   port: 'COM3', // порт и скорость для новых целей
   baud: 9600,
   rawOutput: false, // не фильтровать вывод симулятора (показывать трассировку)
@@ -23,13 +24,18 @@ class Settings {
   constructor(dir) {
     this.file = path.join(dir, 'settings.json');
     this.data = structuredClone(DEFAULTS);
+    let saved = null;
     try {
-      const saved = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+      saved = JSON.parse(fs.readFileSync(this.file, 'utf8'));
       this.data = {...this.data, ...saved, window: {...DEFAULTS.window, ...(saved.window || {})}};
     } catch {
       // Первый запуск или повреждённый файл — используем значения по умолчанию.
     }
     this.data.targets = normalizeTargets(this.data.targets, this.data);
+    if (saved && !(saved.limitsVersion >= 1)) {
+      this.data.targets = applyFactoryLimits(this.data.targets);
+      this.data.limitsVersion = 1;
+    }
     if (!this.data.targets.some((t) => t.id === this.data.target)) this.data.target = this.data.targets[0].id;
   }
 

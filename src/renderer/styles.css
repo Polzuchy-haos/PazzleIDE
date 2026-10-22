@@ -453,6 +453,7 @@ label.block input, label.block select, label.block textarea { width: 100%; }
 input.mono, textarea.mono { font: 12px var(--mono); }
 textarea { height: auto; padding: 6px 8px; resize: vertical; }
 .targets-form input[type="number"] { width: 140px; }
+.limits-reset { align-self: flex-end; border-color: var(--border); }
 .vars-help summary { cursor: pointer; color: var(--fg-dim); font-size: 12px; }
 .vars-help table { border-collapse: collapse; margin-top: 6px; font-size: 12px; }
 .vars-help td { padding: 2px 10px 2px 0; vertical-align: top; color: var(--fg-dim); }
