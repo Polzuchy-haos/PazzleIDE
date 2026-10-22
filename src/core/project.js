@@ -20,6 +20,25 @@ function migrateBlockTypes(node) {
   for (const value of Object.values(node)) migrateBlockTypes(value);
 }
 
+const VARIADIC_TYPES = new Set(['pvm_svc', 'pvm_svc_value']);
+
+/**
+ * svc с двумя постоянными входами A и B -> переменное число аргументов ARG0.. .
+ * Раньше пустые входы не передавались: аргументов столько, сколько до последнего занятого.
+ */
+export function migrateVariadicArgs(node) {
+  if (Array.isArray(node)) return node.forEach(migrateVariadicArgs);
+  if (!node || typeof node !== 'object') return;
+  if (VARIADIC_TYPES.has(node.type) && !node.extraState) {
+    const {A, B, ...rest} = node.inputs || {};
+    const filled = (input) => !!(input?.block || input?.shadow); // тень тоже передавалась
+    const args = filled(B) ? 2 : filled(A) ? 1 : 0;
+    node.inputs = {...rest, ...(args >= 1 && A ? {ARG0: A} : {}), ...(args === 2 ? {ARG1: B} : {})};
+    node.extraState = {args};
+  }
+  for (const value of Object.values(node)) migrateVariadicArgs(value);
+}
+
 export function serializeProject(workspace, {language} = {}) {
   return {
     format: PROJECT_FORMAT,
@@ -47,6 +66,7 @@ export function parseProject(input) {
     data.format = PROJECT_FORMAT;
     migrateBlockTypes(data.workspace);
   }
+  migrateVariadicArgs(data.workspace);
   return data;
 }
 

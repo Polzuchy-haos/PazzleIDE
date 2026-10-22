@@ -378,30 +378,14 @@
       "declare": "volatile int {{NAME}} @ {{ADDR}};"
     },
     "pvm_svc": {
-      "switch": "$CONNECTED:B",
-      "cases": {
-        "true": "svc({{N}}, {{A}}, {{B}});",
-        "false": {
-          "switch": "$CONNECTED:A",
-          "cases": {
-            "true": "svc({{N}}, {{A}});",
-            "false": "svc({{N}});"
-          }
-        }
-      }
+      "repeat": "ARG",
+      "template": "svc({{N}}, {{ITEMS}});",
+      "empty": "svc({{N}});"
     },
     "pvm_svc_value": {
-      "switch": "$CONNECTED:B",
-      "cases": {
-        "true": "svc({{N}}, {{A}}, {{B}})",
-        "false": {
-          "switch": "$CONNECTED:A",
-          "cases": {
-            "true": "svc({{N}}, {{A}})",
-            "false": "svc({{N}})"
-          }
-        }
-      }
+      "repeat": "ARG",
+      "template": "svc({{N}}, {{ITEMS}})",
+      "empty": "svc({{N}})"
     },
     "pvm_bit_op": {
       "switch": "OP",
@@ -530,7 +514,7 @@
     },
     {
       "type": "pvm_svc",
-      "message0": "svc № %1 аргументы %2 %3",
+      "message0": "svc № %1",
       "args0": [
         {
           "type": "field_number",
@@ -538,27 +522,18 @@
           "value": 1,
           "min": 0,
           "precision": 1
-        },
-        {
-          "type": "input_value",
-          "name": "A",
-          "check": "Number"
-        },
-        {
-          "type": "input_value",
-          "name": "B",
-          "check": "Number"
         }
       ],
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
       "colour": "#0fbd8c",
-      "tooltip": "Вызов Си-обработчика ВМ (SVC). Пустые входы не передаются. В pvmsim: 0 — тик, 2 — сумма (1 свободен)"
+      "tooltip": "Вызов Си-обработчика ВМ (SVC). Число аргументов меняется кнопками «+» и «−»; пустой аргумент передаётся как 0. В pvmsim: 0 — тик, 2 — сумма (1 свободен)",
+      "mutator": "pazzle_variadic_args"
     },
     {
       "type": "pvm_svc_value",
-      "message0": "результат svc № %1 аргументы %2 %3",
+      "message0": "результат svc № %1",
       "args0": [
         {
           "type": "field_number",
@@ -566,22 +541,13 @@
           "value": 2,
           "min": 0,
           "precision": 1
-        },
-        {
-          "type": "input_value",
-          "name": "A",
-          "check": "Number"
-        },
-        {
-          "type": "input_value",
-          "name": "B",
-          "check": "Number"
         }
       ],
       "inputsInline": true,
       "output": "Number",
       "colour": "#0fbd8c",
-      "tooltip": "Значение, которое вернул Си-обработчик ВМ (SVC)"
+      "tooltip": "Значение, которое вернул Си-обработчик ВМ (SVC). Число аргументов меняется кнопками «+» и «−»",
+      "mutator": "pazzle_variadic_args"
     },
     {
       "type": "pvm_bit_op",
@@ -814,7 +780,7 @@
           "kind": "block",
           "type": "pvm_svc",
           "inputs": {
-            "A": {
+            "ARG0": {
               "shadow": {
                 "type": "math_number",
                 "fields": {
@@ -822,13 +788,16 @@
                 }
               }
             }
+          },
+          "extraState": {
+            "args": 1
           }
         },
         {
           "kind": "block",
           "type": "pvm_svc_value",
           "inputs": {
-            "A": {
+            "ARG0": {
               "shadow": {
                 "type": "math_number",
                 "fields": {
@@ -836,7 +805,7 @@
                 }
               }
             },
-            "B": {
+            "ARG1": {
               "shadow": {
                 "type": "math_number",
                 "fields": {
@@ -844,6 +813,9 @@
                 }
               }
             }
+          },
+          "extraState": {
+            "args": 2
           }
         },
         {

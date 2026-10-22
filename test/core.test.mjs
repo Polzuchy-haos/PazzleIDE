@@ -163,7 +163,7 @@ describe('язык PVM HLC', () => {
               block: {
                 type: 'pvm_port_set',
                 fields: {NAME: 'LED', ADDR: '0x4000'},
-                inputs: {VALUE: {block: {type: 'pvm_svc_value', fields: {N: 2}, inputs: {A: {block: {type: 'math_number', fields: {NUM: 3}}}, B: {block: {type: 'math_number', fields: {NUM: 4}}}}}}},
+                inputs: {VALUE: {block: {type: 'pvm_svc_value', fields: {N: 2}, extraState: {args: 2}, inputs: {ARG0: {block: {type: 'math_number', fields: {NUM: 3}}}, ARG1: {block: {type: 'math_number', fields: {NUM: 4}}}}}}},
               },
             },
           },
@@ -174,6 +174,32 @@ describe('язык PVM HLC', () => {
     assert.match(code, /section ram 32;/);
     assert.match(code, /volatile int LED @ 0x4000;/);
     assert.match(code, /LED = svc\(2, 3, 4\);/);
+  });
+
+  test('svc: любое число аргументов, пустой — 0', () => {
+    const n = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+    const svc = (args, inputs, next) => ({type: 'pvm_svc', fields: {N: 5}, extraState: {args}, inputs, ...(next ? {next: {block: next}} : {})});
+    const ws = load({blocks: {blocks: [svc(0, {}, svc(4, {ARG0: n(1), ARG1: n(2), ARG3: n(4)}))]}});
+    const {code} = generateCode(pvm, ws);
+    assert.match(code, /svc\(5\);\n\s*svc\(5, 1, 2, 0, 4\);/);
+    const block = ws.getTopBlocks()[0].getNextBlock();
+    assert.deepEqual(block.saveExtraState(), {args: 4});
+    assert.ok(block.getInput('ARG3') && !block.getInput('ARG4'));
+  });
+
+  test('svc из старого проекта (входы A и B) открывается с теми же аргументами', () => {
+    const n = (v) => ({block: {type: 'math_number', fields: {NUM: v}}});
+    const old = (inputs) => ({type: 'pvm_svc', fields: {N: 1}, inputs});
+    const project = parseProject({
+      format: 'pazzleide-project',
+      version: 1,
+      workspace: {blocks: {blocks: [{...old({A: n(7)}), next: {block: {...old({B: n(9)}), next: {block: old({})}}}}]}},
+    });
+    const ws = load(project.workspace);
+    const lines = generateCode(pvm, ws).code.split('\n').map((l) => l.trim());
+    assert.ok(lines.includes('svc(1, 7);'));
+    assert.ok(lines.includes('svc(1, 0, 9);'));
+    assert.ok(lines.includes('svc(1);'));
   });
 
   test('проект, сохранённый до переименования (VisualIDE), открывается', () => {
