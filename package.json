@@ -1,6 +1,6 @@
 {
   "name": "pazzleide",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "description": "PazzleIDE для PVM: визуальное программирование стековой ВМ PVM блоками (как в Scratch), код PVM HLC, сборка, запуск и отладка в симуляторе и на плате",
   "main": "src/main/main.cjs",
   "scripts": {
